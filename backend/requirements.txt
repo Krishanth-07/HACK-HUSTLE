@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+reportlab
+numpy
+pandas
+xlrd
+scikit-learn
+xgboost
+shap

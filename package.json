@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "dev": "npm --prefix frontend run dev -- --host 127.0.0.1 --port 5175",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview -- --host 127.0.0.1 --port 4173"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-router-dom": "^7.14.2",
+    "recharts": "^3.8.1",
+    "vite": "latest"
+  }
+}
