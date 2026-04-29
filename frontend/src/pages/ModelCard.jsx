@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const API = "http://localhost:8000/api";
+const API = "/api";
 
 function MetricCard({ label, value, color }) {
   const pct = Math.round(value * 100);

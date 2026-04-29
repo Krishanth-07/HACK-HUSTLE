@@ -1,9 +1,9 @@
 {
-  "merkle_root": "5d1ab5fea84bf1c117149f667b72201635ab7f2c4472466071a8cf7fd5903ebf",
+  "merkle_root": "0c83826642d266c6e4d55a02b2ca2f50d47b47283d69c2173500a5c67e978c6d",
   "entries": [
     {
       "entry_number": 1,
-      "entry_id": "0af047b5-2968-4326-b691-e3e08670a1ab",
+      "entry_id": "1dfe09a1-6104-48ad-bed3-cc288ba18fea",
       "timestamp": "2026-04-29T09:14:00+05:30",
       "applicant_id": 1,
       "applicant_name": "Rajan Murugan",
@@ -22,15 +22,31 @@
         "gender": "male",
         "geography": "tier2"
       },
+      "application_context": {
+        "loan_purpose": "Business Loan - Auto Parts Shop",
+        "collateral_type": "Shop inventory",
+        "collateral_value": 120000,
+        "collateral_verified": "pending",
+        "collateral_notes": "Auto parts stock estimate pending field verification.",
+        "model_usage_note": "Collateral is recorded for underwriting context and audit evidence; it is not a model feature in this UCI-trained XGBoost model."
+      },
       "shap_top_factor": "Repayment Status",
       "shap_value": -2.1068,
+      "anomaly": {
+        "status": "OUTLIER_FEATURE",
+        "reason": "Unusual Repayment Status value detected \u2014 outside normal applicant distribution",
+        "feature_name": "Repayment Status",
+        "feature_value": 4.0,
+        "training_mean": -0.0164,
+        "training_std": 1.1235
+      },
       "loan_amount": 200000,
       "prev_hash": "GENESIS",
-      "entry_hash": "c70be2622d20b5aa21f4057fb5b316354c13e32d66a6b9b1b501202151263a9b"
+      "entry_hash": "88ff92abd61993a90fa5e5eaddabdeaaaee8ed2c77a0dec09d6f1539e40e0a93"
     },
     {
       "entry_number": 2,
-      "entry_id": "a1dfcf60-41d9-435a-b1b3-6bc8ba70bb1f",
+      "entry_id": "f766fc24-2cd7-41ad-878b-fcd1e6aacc74",
       "timestamp": "2026-04-29T09:22:00+05:30",
       "applicant_id": 3,
       "applicant_name": "Murugesan Pillai",
@@ -49,15 +65,31 @@
         "gender": "male",
         "geography": "tier2"
       },
+      "application_context": {
+        "loan_purpose": "Personal Loan",
+        "collateral_type": "None",
+        "collateral_value": 0,
+        "collateral_verified": "unavailable",
+        "collateral_notes": "Applicant did not pledge collateral for this personal loan.",
+        "model_usage_note": "Collateral is recorded for underwriting context and audit evidence; it is not a model feature in this UCI-trained XGBoost model."
+      },
       "shap_top_factor": "Repayment Status",
-      "shap_value": 0.67,
+      "shap_value": -2.33,
+      "anomaly": {
+        "status": "OUTLIER_FEATURE",
+        "reason": "Unusual Repayment Status value detected \u2014 outside normal applicant distribution",
+        "feature_name": "Repayment Status",
+        "feature_value": 4.0,
+        "training_mean": -0.0164,
+        "training_std": 1.1235
+      },
       "loan_amount": 300000,
-      "prev_hash": "c70be2622d20b5aa21f4057fb5b316354c13e32d66a6b9b1b501202151263a9b",
-      "entry_hash": "d79a075fa63e5dbf68f0acaa18a4f96bce3235b6fdc3144fa3365fe3605f8f27"
+      "prev_hash": "88ff92abd61993a90fa5e5eaddabdeaaaee8ed2c77a0dec09d6f1539e40e0a93",
+      "entry_hash": "d6d051c32841dc695ef95d3093531a1282e81a5fe75096112ae57fb829a9bbef"
     },
     {
       "entry_number": 3,
-      "entry_id": "98eb01a5-1595-433e-bb92-a131b75246c6",
+      "entry_id": "3532710d-2b89-485c-a852-38636d7684db",
       "timestamp": "2026-04-29T09:31:00+05:30",
       "applicant_id": 4,
       "applicant_name": "Selvi Arumugam",
@@ -76,15 +108,31 @@
         "gender": "female",
         "geography": "rural"
       },
+      "application_context": {
+        "loan_purpose": "Agriculture Loan",
+        "collateral_type": "Agricultural equipment",
+        "collateral_value": 65000,
+        "collateral_verified": "pending",
+        "collateral_notes": "Equipment ownership needs panchayat and invoice verification.",
+        "model_usage_note": "Collateral is recorded for underwriting context and audit evidence; it is not a model feature in this UCI-trained XGBoost model."
+      },
       "shap_top_factor": "Repayment Status",
       "shap_value": -2.2417,
+      "anomaly": {
+        "status": "OUTLIER_FEATURE",
+        "reason": "Unusual Repayment Status value detected \u2014 outside normal applicant distribution",
+        "feature_name": "Repayment Status",
+        "feature_value": 3.0,
+        "training_mean": -0.0164,
+        "training_std": 1.1235
+      },
       "loan_amount": 50000,
-      "prev_hash": "d79a075fa63e5dbf68f0acaa18a4f96bce3235b6fdc3144fa3365fe3605f8f27",
-      "entry_hash": "55798745af229c008284eed4b68f3a6927919ef4a70e191e9d53db5bba413942"
+      "prev_hash": "d6d051c32841dc695ef95d3093531a1282e81a5fe75096112ae57fb829a9bbef",
+      "entry_hash": "5917526cc3c912f3905f45805d4e8ffeac29af0cf7b4b7f7d5a7b085ea1268f4"
     },
     {
       "entry_number": 4,
-      "entry_id": "2c3abeff-cd10-40fe-b3a1-11c99886cbee",
+      "entry_id": "83c9becc-67ad-4431-bcc6-c693abefd656",
       "timestamp": "2026-04-29T09:45:00+05:30",
       "applicant_id": 2,
       "applicant_name": "Priya Sundaram",
@@ -103,15 +151,27 @@
         "gender": "female",
         "geography": "metro"
       },
+      "application_context": {
+        "loan_purpose": "Home Loan",
+        "collateral_type": "Residential property co-ownership",
+        "collateral_value": 900000,
+        "collateral_verified": "verified",
+        "collateral_notes": "Property papers verified during preliminary review.",
+        "model_usage_note": "Collateral is recorded for underwriting context and audit evidence; it is not a model feature in this UCI-trained XGBoost model."
+      },
       "shap_top_factor": "Repayment Status",
       "shap_value": 0.6699,
+      "anomaly": {
+        "status": "NORMAL",
+        "reason": "No anomaly detected"
+      },
       "loan_amount": 500000,
-      "prev_hash": "55798745af229c008284eed4b68f3a6927919ef4a70e191e9d53db5bba413942",
-      "entry_hash": "79a142e3855bf1a3b4a85149ffa927b83820a3d9ec0716c6a258a21494092e48"
+      "prev_hash": "5917526cc3c912f3905f45805d4e8ffeac29af0cf7b4b7f7d5a7b085ea1268f4",
+      "entry_hash": "01fdfca2e0c82978df46cd5d579a889e1bcea3f1306429e91136239cafb436e4"
     },
     {
       "entry_number": 5,
-      "entry_id": "0c091942-758d-4b2d-8e33-0484a9e85379",
+      "entry_id": "426e6594-2d9e-456f-824e-96ff443fe562",
       "timestamp": "2026-04-29T10:02:00+05:30",
       "applicant_id": 5,
       "applicant_name": "Arun Krishnamurthy",
@@ -130,11 +190,23 @@
         "gender": "male",
         "geography": "metro"
       },
+      "application_context": {
+        "loan_purpose": "Business Expansion Loan",
+        "collateral_type": "Business receivables",
+        "collateral_value": 550000,
+        "collateral_verified": "verified",
+        "collateral_notes": "Receivables and GST filings verified for business expansion.",
+        "model_usage_note": "Collateral is recorded for underwriting context and audit evidence; it is not a model feature in this UCI-trained XGBoost model."
+      },
       "shap_top_factor": "Repayment Status",
       "shap_value": 0.6736,
+      "anomaly": {
+        "status": "NORMAL",
+        "reason": "No anomaly detected"
+      },
       "loan_amount": 800000,
-      "prev_hash": "79a142e3855bf1a3b4a85149ffa927b83820a3d9ec0716c6a258a21494092e48",
-      "entry_hash": "ea9ffcd30583fea834d5485c6f286dc0927b4ea44f93860ffbf87cd9371eb371"
+      "prev_hash": "01fdfca2e0c82978df46cd5d579a889e1bcea3f1306429e91136239cafb436e4",
+      "entry_hash": "cdaf574fee1b03902f9e8300edddfcf3af9f1c77770ef82779240e54032877e9"
     }
   ]
 }

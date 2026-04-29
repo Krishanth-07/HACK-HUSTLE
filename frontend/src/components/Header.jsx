@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
-const API = "http://localhost:8000/api";
+const API = "/api";
 
 const talkingPoints = {
   "/": [
@@ -13,6 +13,11 @@ const talkingPoints = {
     "Type any applicant profile - model predicts in real time",
     "SHAP waterfall updates instantly showing which features drove the decision",
     "This proves the model generalises beyond our 5 demo applicants",
+  ],
+  "/explanation": [
+    "Dedicated SHAP page shows the branched reasoning tree clearly",
+    "Full attribution trace is separated from the sandbox to reduce clutter",
+    "This is the page to use when you want to walk judges through every step",
   ],
   "/fairness": [
     "500-person synthetic population evaluated every month",
@@ -110,12 +115,13 @@ export default function Header() {
     <header className="min-h-16 border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6">
       <div className="grid min-h-16 grid-cols-1 items-center gap-3 py-3 lg:grid-cols-[220px_1fr_280px] lg:py-0">
         <div className="min-w-0">
-          <div className="text-lg font-black text-slate-950">VaazhlaiPartner</div>
+          <div className="text-lg font-black text-slate-950">Optimus</div>
           <div className="text-xs font-semibold text-slate-500">Credit Decision System</div>
         </div>
         <nav className="flex gap-1 overflow-x-auto lg:justify-center">
           <NavLink to="/" className={linkClass}>Applications</NavLink>
           <NavLink to="/sandbox" className={linkClass}>Try Live Prediction</NavLink>
+          <NavLink to="/explanation" className={linkClass}>SHAP Explanation</NavLink>
           <NavLink to="/fairness" className={linkClass}>Fairness Monitor</NavLink>
           <NavLink to="/audit" className={linkClass}>Audit Log</NavLink>
           <NavLink to="/model-card" className={linkClass}>Model Card</NavLink>

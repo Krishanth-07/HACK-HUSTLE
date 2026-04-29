@@ -6,6 +6,7 @@ import AuditPage from "./pages/AuditPage.jsx";
 import PredictionSandbox from "./pages/PredictionSandbox.jsx";
 import ApplicantMessage from "./pages/ApplicantMessage.jsx";
 import ModelCard from "./pages/ModelCard.jsx";
+import SHAPExplanationPage from "./pages/SHAPExplanationPage.jsx";
 
 export default function App() {
   const location = useLocation();
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/fairness" element={<FairnessPage />} />
           <Route path="/audit" element={<AuditPage />} />
           <Route path="/sandbox" element={<PredictionSandbox />} />
+          <Route path="/explanation" element={<SHAPExplanationPage />} />
           <Route path="/model-card" element={<ModelCard />} />
         </Routes>
       </div>

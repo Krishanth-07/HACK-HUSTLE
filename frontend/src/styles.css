@@ -81,3 +81,50 @@ body {
 .confidence-ring {
   transition: stroke-dashoffset 850ms cubic-bezier(.2,.8,.2,1);
 }
+
+.pipeline-dot {
+  animation: pipelineFlow 1.6s linear infinite;
+}
+
+.branch-lane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.8) 45%, transparent 100%);
+  background-size: 160% 100%;
+  animation: branchFlow 1.6s linear infinite;
+  pointer-events: none;
+}
+
+/* Safe panel: cap panel height and enable internal scrolling to avoid layout overflow */
+.safe-panel {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+@keyframes pipelineFlow {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100% - 8px));
+    opacity: 0;
+  }
+}
+
+@keyframes branchFlow {
+  0% {
+    background-position: 130% 0;
+  }
+  100% {
+    background-position: -30% 0;
+  }
+}

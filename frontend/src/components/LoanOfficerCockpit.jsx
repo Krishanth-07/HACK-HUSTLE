@@ -2,9 +2,31 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SHAPModal from "./SHAPModal.jsx";
 
-const API = "http://localhost:8000/api";
-const timeAgo = { 1: "2 mins ago", 2: "8 mins ago", 3: "15 mins ago", 4: "34 mins ago", 5: "1 hr ago" };
-const urgency = { 1: "bg-red-500", 2: "bg-green-500", 3: "bg-red-500", 4: "bg-amber-500", 5: "bg-green-500" };
+const API = "/api";
+const timeAgo = {
+  1: "2 mins ago",
+  2: "8 mins ago",
+  3: "15 mins ago",
+  4: "34 mins ago",
+  5: "1 hr ago",
+  6: "1 hr ago",
+  7: "2 hrs ago",
+  8: "2 hrs ago",
+  9: "3 hrs ago",
+  10: "3 hrs ago",
+};
+const urgency = {
+  1: "bg-red-500",
+  2: "bg-green-500",
+  3: "bg-red-500",
+  4: "bg-amber-500",
+  5: "bg-green-500",
+  6: "bg-green-500",
+  7: "bg-red-500",
+  8: "bg-green-500",
+  9: "bg-red-500",
+  10: "bg-amber-500",
+};
 const messagePreview = {
   1: {
     tamil: "வணக்கம் ரஜன் அவர்களே, உங்கள் கடன் விண்ணப்பம் இப்போது அனுமதிக்க இயலவில்லை. முக்கிய காரணம்: கடந்த கட்டண பழக்கம் மற்றும் EMI சுமை அதிகமாக உள்ளது.",
@@ -56,6 +78,12 @@ function percent(value) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function collateralStatusClass(status) {
+  if (status === "verified") return "bg-green-100 text-green-800";
+  if (status === "pending") return "bg-amber-100 text-amber-800";
+  return "bg-red-100 text-red-800";
+}
+
 function ConfidenceGauge({ value }) {
   const [animatedValue, setAnimatedValue] = useState(0);
   const pct = Math.max(0, Math.min(100, (animatedValue || 0) * 100));
@@ -97,10 +125,45 @@ function ConfidenceGauge({ value }) {
   );
 }
 
+function AnomalyBadge({ anomaly }) {
+  const status = anomaly?.status || "NORMAL";
+  if (status === "BORDERLINE") {
+    return <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">⚠ Borderline — Human Review Recommended</span>;
+  }
+  if (status === "OUTLIER_FEATURE") {
+    return <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-800">🔴 Anomalous Input Detected</span>;
+  }
+  return null;
+}
+
+
 function verdictSentence(applicant) {
   const prediction = applicant.prediction;
   if (prediction.decision === "APPROVE") return "Approve - strong repayment capacity with clean history";
   return `Reject - ${prediction.shap_factors[0].plain_english}`;
+}
+
+function previewFor(applicant) {
+  const fixed = messagePreview[applicant.id];
+  if (fixed) return fixed;
+  const rejected = applicant.prediction?.decision === "REJECT";
+  const topFactor = applicant.prediction?.shap_factors?.[0];
+  return {
+    tamil: rejected
+      ? `Hi ${applicant.name}, your loan is not ready for approval right now. Main reason: ${topFactor?.plain_english || "risk factors need improvement"}.`
+      : `Hi ${applicant.name}, your loan is ready for the next approval step. Your repayment capacity and credit profile look positive.`,
+    steps: rejected
+      ? [
+          "Reduce monthly EMI burden before reapplying.",
+          "Keep every repayment on time for the next 3 months.",
+          "Reapply with updated income and loan documents after improvement.",
+        ]
+      : [
+          "Keep income and bank statements ready for verification.",
+          "Continue current on-time repayment behavior.",
+          "Proceed to documentation review for final approval.",
+        ],
+  };
 }
 
 export default function LoanOfficerCockpit() {
@@ -152,6 +215,9 @@ export default function LoanOfficerCockpit() {
 
   const prediction = selected.prediction;
   const rejected = prediction.decision === "REJECT";
+  const currentPreview = previewFor(selected);
+  const anomaly = prediction.anomaly || { status: "NORMAL", reason: "No anomaly detected" };
+  const anomalous = anomaly.status !== "NORMAL";
 
   return (
     <main className="grid min-h-[calc(100vh-173px)] grid-cols-1 overflow-hidden lg:h-[calc(100vh-173px)] lg:grid-cols-[38%_62%]">
@@ -180,7 +246,7 @@ export default function LoanOfficerCockpit() {
               </div>
               <div className="text-right">
                 <div className="text-sm font-black text-slate-900">{money(applicant.loan_amount)}</div>
-                <div className="text-xs font-semibold text-slate-500">{timeAgo[applicant.id]}</div>
+                <div className="text-xs font-semibold text-slate-500">{timeAgo[applicant.id] || "Today"}</div>
               </div>
             </div>
           ))}
@@ -197,6 +263,12 @@ export default function LoanOfficerCockpit() {
         ) : (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_220px]">
             <div className="grid gap-4">
+              {anomalous && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-black text-amber-900">
+                  This decision has been flagged for human review. Confidence: {percent(prediction.confidence)}
+                </div>
+              )}
+
               <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 className="text-2xl font-black text-slate-950">{selected.name}</h2>
                 <div className="mt-4 grid gap-3 text-sm font-semibold text-slate-600">
@@ -207,13 +279,32 @@ export default function LoanOfficerCockpit() {
                     <span>Active Loans: <b className="text-slate-950">{selected.num_active_loans}</b></span>
                     <span>EMI/Income: <b className={selected.emi_to_income_ratio > 0.4 ? "text-red-600" : "text-green-600"}>{percent(selected.emi_to_income_ratio)}</b></span>
                   </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <div className="text-xs font-black uppercase tracking-wide text-slate-500">Collateral Context</div>
+                        <div className="mt-1 text-sm font-black text-slate-950">
+                          {selected.collateral_type || "None"} | {money(selected.collateral_value || 0)}
+                        </div>
+                      </div>
+                      <span className={`w-fit rounded-full px-3 py-1 text-xs font-black uppercase ${collateralStatusClass(selected.collateral_verified)}`}>
+                        {selected.collateral_verified || "unavailable"}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs font-bold leading-5 text-slate-500">
+                      {selected.collateral_notes || "Collateral is recorded as underwriting context, not as a model feature."}
+                    </p>
+                  </div>
                 </div>
               </article>
 
               <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <div className={`inline-flex rounded-xl px-5 py-3 text-2xl font-black text-white pulse-once ${rejected ? "bg-red-600" : "bg-green-600"}`}>{prediction.decision}</div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className={`inline-flex rounded-xl px-5 py-3 text-2xl font-black text-white pulse-once ${rejected ? "bg-red-600" : "bg-green-600"}`}>{prediction.decision}</div>
+                      <AnomalyBadge anomaly={anomaly} />
+                    </div>
                     <div className="mt-3 text-lg font-black text-slate-900">{percent(prediction.confidence)} confidence</div>
                   </div>
                   <ConfidenceGauge key={selected.id} value={prediction.confidence} />
@@ -222,12 +313,42 @@ export default function LoanOfficerCockpit() {
                 <p className="mt-2 text-sm font-semibold text-slate-600">
                   Primary factor: {prediction.shap_factors[0].feature} ({prediction.shap_factors[0].plain_english})
                 </p>
+                <div className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm sm:grid-cols-4">
+                  <div>
+                    <div className="text-xs font-black uppercase text-slate-500">Default Risk</div>
+                    <div className="mt-1 text-lg font-black text-slate-950">{percent(prediction.reject_probability)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-black uppercase text-slate-500">Policy Threshold</div>
+                    <div className="mt-1 text-lg font-black text-slate-950">{modelInfo ? percent(modelInfo.rejection_threshold) : "65.0%"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-black uppercase text-slate-500">Top SHAP Driver</div>
+                    <div className="mt-1 text-sm font-black text-slate-950">{prediction.shap_factors[0].feature}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-black uppercase text-slate-500">Audit State</div>
+                    <div className="mt-1 text-sm font-black text-blue-700">Ready to hash</div>
+                  </div>
+                </div>
               </article>
 
               <article className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3">
                 <button onClick={() => setModalOpen(true)} className="rounded-lg bg-blue-600 px-4 py-3 text-sm font-black text-white">Full Analysis</button>
                 <button onClick={() => navigate("/fairness", { state: { highlight: selected.gender || selected.geography } })} className="rounded-lg border border-amber-400 bg-white px-4 py-3 text-sm font-black text-amber-700">Flag for Bias Review</button>
                 <button onClick={exportAudit} className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-700">Export Audit PDF</button>
+                {anomalous && (
+                  <button
+                    onClick={() => {
+                      setToast("Case escalated. Senior review scheduled.");
+                      clearTimeout(toastTimer.current);
+                      toastTimer.current = setTimeout(() => setToast(""), 3000);
+                    }}
+                    className="rounded-lg border border-amber-500 bg-amber-50 px-4 py-3 text-sm font-black text-amber-800 sm:col-span-3"
+                  >
+                    Escalate to Senior Officer
+                  </button>
+                )}
               </article>
 
               {modelInfo && (
@@ -268,11 +389,11 @@ export default function LoanOfficerCockpit() {
                 <div className="h-[334px] overflow-y-auto px-3 pb-4">
                   <div className="mt-3 rounded-lg bg-white p-3 text-[10.5px] leading-5 shadow">
                     <b>{selected.name}</b>
-                    <p className="mt-2 font-semibold text-slate-900">{messagePreview[selected.id]?.tamil}</p>
+                    <p className="mt-2 font-semibold text-slate-900">{currentPreview.tamil}</p>
                     <div className="mt-3 rounded-md bg-green-50 p-2 text-[10px] font-bold leading-4 text-green-800">
                       <div className="mb-1 text-[10.5px] font-black">தகுதி பெற செய்ய வேண்டியது:</div>
                       <ol className="list-decimal space-y-1 pl-4">
-                        {messagePreview[selected.id]?.steps.map((step) => (
+                        {currentPreview.steps.map((step) => (
                           <li key={step}>{step}</li>
                         ))}
                       </ol>

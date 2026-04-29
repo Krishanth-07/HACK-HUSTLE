@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-const API = "http://localhost:8000/api";
+const API = "/api";
 
 function formatTime(value) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -25,6 +25,7 @@ export default function AuditLog() {
   const [toast, setToast] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [regulatorOpen, setRegulatorOpen] = useState(false);
+  const [anomalyFilter, setAnomalyFilter] = useState("all");
 
   const load = () =>
     fetch(`${API}/audit`).then((r) => r.json()).then((payload) => {
@@ -37,6 +38,11 @@ export default function AuditLog() {
   }, []);
 
   const statusList = useMemo(() => Object.values(statuses).sort((a, b) => a.entry_number - b.entry_number), [statuses]);
+  const filteredEntries = useMemo(() => {
+    if (anomalyFilter === "normal") return entries.filter((entry) => (entry.anomaly?.status || "NORMAL") === "NORMAL");
+    if (anomalyFilter === "flagged") return entries.filter((entry) => (entry.anomaly?.status || "NORMAL") !== "NORMAL");
+    return entries;
+  }, [entries, anomalyFilter]);
 
   const verify = async () => {
     setVerifying(true);
@@ -125,6 +131,14 @@ export default function AuditLog() {
       )}
 
       <section className="mt-5 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-black text-slate-950">Decision Records</h2>
+          <select value={anomalyFilter} onChange={(event) => setAnomalyFilter(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-700">
+            <option value="all">All decisions</option>
+            <option value="normal">Normal only</option>
+            <option value="flagged">Flagged only</option>
+          </select>
+        </div>
         {!entries.length ? (
           <div className="grid gap-3 p-5">
             <div className="h-10 rounded-lg skeleton" />
@@ -133,7 +147,7 @@ export default function AuditLog() {
             <div className="h-10 rounded-lg skeleton" />
           </div>
         ) : (
-        <table className="min-w-[980px] w-full text-left text-sm">
+        <table className="min-w-[1080px] w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3">Entry #</th>
@@ -142,18 +156,21 @@ export default function AuditLog() {
               <th className="px-4 py-3">Decision</th>
               <th className="px-4 py-3">Confidence</th>
               <th className="px-4 py-3">SHAP Factor</th>
+              <th className="px-4 py-3">Anomaly</th>
               <th className="px-4 py-3">SHAP Value</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Action</th>
             </tr>
           </thead>
           <tbody>
-            {entries.map((entry) => {
+            {filteredEntries.map((entry) => {
               const status = statuses[entry.entry_id];
               const valid = status?.status === "VALID";
               const known = Boolean(status);
+              const anomaly = entry.anomaly?.status || "NORMAL";
+              const flagged = anomaly !== "NORMAL";
               return (
-                <tr key={entry.entry_id} className={`border-t border-slate-100 ${known && valid ? "bg-green-50" : ""} ${known && !valid ? "shake bg-red-50" : ""}`}>
+                <tr key={entry.entry_id} className={`border-l-4 border-t border-slate-100 ${flagged ? "border-l-amber-400" : "border-l-transparent"} ${known && valid ? "bg-green-50" : ""} ${known && !valid ? "shake bg-red-50" : ""}`}>
                   <td className="px-4 py-3 font-black">{entry.entry_number}</td>
                   <td className="px-4 py-3 font-semibold text-slate-600">{formatTime(entry.timestamp)}</td>
                   <td className="px-4 py-3 font-black text-slate-900">{entry.applicant_name}</td>
@@ -162,6 +179,9 @@ export default function AuditLog() {
                   </td>
                   <td className="px-4 py-3 font-bold">{(entry.confidence * 100).toFixed(1)}%</td>
                   <td className="px-4 py-3 text-slate-600">{entry.shap_top_factor}</td>
+                  <td className="px-4 py-3">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-black ${flagged ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600"}`}>{anomaly}</span>
+                  </td>
                   <td className="px-4 py-3">
                     {editing === entry.entry_id ? (
                       <input value={draft} onChange={(e) => setDraft(e.target.value)} className="w-20 rounded border border-slate-300 px-2 py-1" type="number" step="0.01" />

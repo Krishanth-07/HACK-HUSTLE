@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+import csv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
-from io import BytesIO
+from io import BytesIO, StringIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 from audit import build_report_pdf, read_audit_log, tamper_entry, verify_entries
-from model import fairness_for_month, get_applicant_with_prediction, get_applicants, model_info, predict, predict_custom
+from model import fairness_for_month, fairness_population_for_month, get_applicant_with_prediction, get_applicants, model_info, predict, predict_custom
 
 app = FastAPI(title="VaazhlaiPartner API")
 
@@ -158,3 +159,37 @@ def api_audit_report():
 @app.get("/api/fairness/{month}")
 def api_fairness(month: int):
     return fairness_for_month(month)
+
+
+@app.get("/api/fairness/{month}/population")
+def api_fairness_population(month: int):
+    return fairness_population_for_month(month)
+
+
+@app.get("/api/fairness/{month}/population.csv")
+def api_fairness_population_csv(month: int):
+    population = fairness_population_for_month(month)
+    buffer = StringIO()
+    fieldnames = [
+        "person_id",
+        "gender",
+        "age_group",
+        "geography",
+        "monthly_income",
+        "emi_to_income_ratio",
+        "num_active_loans",
+        "num_late_payments",
+        "credit_history_months",
+        "loan_amount",
+        "predicted_default_risk",
+        "decision",
+        "actual_default",
+    ]
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(population)
+    return Response(
+        buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=fairness-population-month-{month}.csv"},
+    )

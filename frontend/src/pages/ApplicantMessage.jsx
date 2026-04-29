@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
-const API = "http://localhost:8000/api";
+const API = "/api";
 
 const tamilNames = {
   1: "ரஜன் முருகன்",
@@ -99,6 +99,7 @@ export default function ApplicantMessage() {
   const [applicant, setApplicant] = useState(null);
   const [language, setLanguage] = useState("ta");
   const [shared, setShared] = useState(false);
+  const [reviewRequested, setReviewRequested] = useState(false);
 
   useEffect(() => {
     fetch(`${API}/applicant/${id}`).then((response) => response.json()).then(setApplicant);
@@ -128,6 +129,7 @@ export default function ApplicantMessage() {
   const displayName = text ? tamilNames[applicant.id] || applicant.name : applicant.name;
   const terms = loanTerms(applicant);
   const steps = stepsFor(applicant);
+  const caseId = `VP-REV-${String(applicant.id).padStart(3, "0")}-${new Date().getFullYear()}`;
   const summary = approved
     ? `VaazhlaiPartner: ${applicant.name} is approved for ${money(applicant.loan_amount)}. Confidence ${(applicant.prediction.confidence * 100).toFixed(1)}%.`
     : `VaazhlaiPartner: ${applicant.name} was not approved right now. Top reason: ${applicant.prediction.shap_factors[0].plain_english}. Suggested next step: ${steps[0][1]}.`;
@@ -249,6 +251,22 @@ export default function ApplicantMessage() {
                     ? "செய்யக்கூடிய காரணிகளில் உள்ள SHAP தாக்கத்தை வைத்து இந்த மதிப்பெண் கணக்கிடப்படுகிறது."
                     : "This score is estimated from actionable SHAP impact: more fixable impact means more room to improve."}
                 </p>
+              </div>
+
+              <div className="mt-3 rounded-2xl bg-white p-3 shadow-sm">
+                <button
+                  onClick={() => setReviewRequested(true)}
+                  className="w-full rounded-full bg-[#075e54] px-3 py-2 text-xs font-black text-white"
+                >
+                  {text ? "மனித மதிப்பாய்வு கோரவும்" : "Request human review"}
+                </button>
+                {reviewRequested && (
+                  <div className="mt-3 rounded-xl bg-green-50 p-3 text-xs font-bold leading-5 text-green-900">
+                    {text
+                      ? `உங்கள் கோரிக்கை பதிவு செய்யப்பட்டது. வழக்கு எண்: ${caseId}. audit trail இணைக்கப்பட்டுள்ளது.`
+                      : `Your review request has been logged. Case ID: ${caseId}. The audit trail is attached for the loan officer.`}
+                  </div>
+                )}
               </div>
             </>
           )}

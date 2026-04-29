@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import SHAPPipelineMini from "../components/SHAPPipelineMini.jsx";
+// Sandbox keeps inputs and a compact result card. Full explanation moved to /explanation.
 
-const API = "http://localhost:8000/api";
+const API = "/api";
 
 const sliders = [
   ["monthly_income", "Monthly Income", 10000, 200000, 1000, "currency"],
@@ -21,15 +23,6 @@ const initialValues = {
   loan_amount: 400000,
 };
 
-const rajanValues = {
-  monthly_income: 32000,
-  emi_amount: 11500,
-  credit_score: 580,
-  credit_age_months: 18,
-  num_defaults: 2,
-  loan_amount: 200000,
-};
-
 function formatValue(value, type) {
   if (type === "currency") {
     return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
@@ -39,46 +32,31 @@ function formatValue(value, type) {
 }
 
 export default function PredictionSandbox() {
+  const navigate = useNavigate();
   const [values, setValues] = useState(initialValues);
   const [result, setResult] = useState(null);
-  const [rajanResult, setRajanResult] = useState(null);
-  const [compareToRajan, setCompareToRajan] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const runPrediction = async () => {
     setLoading(true);
+    setError("");
     setResult(null);
-    const response = await fetch(`${API}/predict/custom`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    const payload = await response.json();
-    setResult(payload);
-    setLoading(false);
-  };
-
-  const toggleCompare = async () => {
-    const next = !compareToRajan;
-    setCompareToRajan(next);
-    if (next && !rajanResult) {
+    try {
       const response = await fetch(`${API}/predict/custom`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(rajanValues),
+        body: JSON.stringify(values),
       });
-      setRajanResult(await response.json());
+      if (!response.ok) throw new Error(`Prediction API failed with status ${response.status}`);
+      const payload = await response.json();
+      setResult(payload);
+    } catch (err) {
+      setError(err.message || "Unable to run prediction. Check that FastAPI is running on port 8000.");
+    } finally {
+      setLoading(false);
     }
   };
-
-  const chartData = useMemo(() => {
-    if (!result) return [];
-    const rajanMap = new Map((rajanResult?.shap_values || []).map((item) => [item.feature, item.impact]));
-    return result.shap_values.map((item) => ({
-      ...item,
-      rajanImpact: rajanMap.get(item.feature) ?? 0,
-    }));
-  }, [result, rajanResult]);
 
   return (
     <main className="min-h-[calc(100vh-64px)] bg-slate-50 p-4 sm:p-6">
@@ -88,7 +66,7 @@ export default function PredictionSandbox() {
       </header>
 
       <section className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[420px_1fr]">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm max-h-[60vh] overflow-auto safe-panel">
           <h2 className="text-lg font-black text-slate-950">Applicant Inputs</h2>
           <div className="mt-5 grid gap-5">
             {sliders.map(([key, label, min, max, step, type]) => (
@@ -117,12 +95,11 @@ export default function PredictionSandbox() {
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-black text-slate-950">Model Result</h2>
-            <button
-              onClick={toggleCompare}
-              className={`rounded-full px-3 py-2 text-xs font-black transition ${compareToRajan ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
-            >
-              Compare to Rajan
-            </button>
+            {result && (
+              <button onClick={() => navigate("/explanation", { state: { values, result } })} className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-black text-blue-800">
+                Open Full SHAP Explanation
+              </button>
+            )}
           </div>
           {loading && (
             <div className="mt-6 grid gap-4">
@@ -131,7 +108,13 @@ export default function PredictionSandbox() {
               <div className="h-80 rounded-xl skeleton" />
             </div>
           )}
-          {!loading && !result && <p className="mt-6 text-sm font-semibold text-slate-500">Run the model to see the verdict, confidence, SHAP waterfall, and top reason.</p>}
+          {!loading && error && (
+            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-bold text-red-800">{error}</p>
+              <button onClick={runPrediction} className="mt-3 rounded-lg bg-red-600 px-3 py-2 text-xs font-black text-white">Retry</button>
+            </div>
+          )}
+          {!loading && !error && !result && <p className="mt-6 text-sm font-semibold text-slate-500">Run the model to see the verdict, confidence, SHAP waterfall, and top reason.</p>}
           {!loading && result && (
             <div className="mt-5">
               <div className={`inline-flex rounded-xl px-5 py-3 text-2xl font-black text-white ${result.decision === "APPROVE" ? "bg-green-600" : "bg-red-600"}`}>{result.decision}</div>
@@ -150,23 +133,9 @@ export default function PredictionSandbox() {
                   Raw model default risk: {(result.reject_probability * 100).toFixed(1)}%. The final verdict uses the lender policy threshold from the Model Card.
                 </p>
               )}
-              <div className="mt-5 h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} layout="vertical" margin={{ left: 100, right: 30 }}>
-                    <CartesianGrid stroke="#e5e7eb" horizontal={false} />
-                    <XAxis type="number" tickFormatter={(value) => value.toFixed(1)} />
-                    <YAxis type="category" dataKey="feature" width={100} tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(value, name) => [Number(value).toFixed(4), name === "rajanImpact" ? "Rajan SHAP impact" : "Custom SHAP impact"]} />
-                    {compareToRajan && rajanResult && (
-                      <Bar dataKey="rajanImpact" radius={5} fill="#64748b" opacity={0.32} />
-                    )}
-                    <Bar dataKey="impact" radius={5}>
-                      {chartData.map((entry) => (
-                        <Cell key={entry.feature} fill={entry.impact < 0 ? "#dc2626" : "#16a34a"} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="mt-5">
+                <SHAPPipelineMini compact loading={loading} result={result} values={values} trace={result?.shap_trace || null} />
+                <p className="mt-4 text-xs font-semibold text-slate-500">For the detailed branching tree and step-by-step SHAP trace, open the dedicated explanation page.</p>
               </div>
             </div>
           )}

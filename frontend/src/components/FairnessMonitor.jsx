@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const API = "http://localhost:8000/api";
+const API = "/api";
 const dimensions = [
   ["approval_by_gender", "Approval Rate by Gender"],
   ["approval_by_age", "Approval Rate by Age Group"],
@@ -23,6 +23,14 @@ function barColor(ratio) {
 
 function titleCase(value) {
   return value.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("-");
+}
+
+function money(value) {
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
+}
+
+function percent(value) {
+  return `${(Number(value) * 100).toFixed(1)}%`;
 }
 
 function flattenRows(data) {
@@ -61,6 +69,159 @@ function ChartCard({ title, values, mode }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
+    </section>
+  );
+}
+
+function PopulationTable({ month, population, loading }) {
+  const [search, setSearch] = useState("");
+  const [decision, setDecision] = useState("all");
+  const [gender, setGender] = useState("all");
+  const [geography, setGeography] = useState("all");
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return population.filter((person) => {
+      const matchesSearch = !query || [
+        person.person_id,
+        person.gender,
+        person.age_group,
+        person.geography,
+        person.decision,
+      ].join(" ").toLowerCase().includes(query);
+      const matchesDecision = decision === "all" || person.decision === decision;
+      const matchesGender = gender === "all" || person.gender === gender;
+      const matchesGeography = geography === "all" || person.geography === geography;
+      return matchesSearch && matchesDecision && matchesGender && matchesGeography;
+    });
+  }, [population, search, decision, gender, geography]);
+
+  const previewRows = filtered.slice(0, 100);
+  const approvedCount = population.filter((person) => person.decision === "APPROVE").length;
+  const rejectedCount = population.length - approvedCount;
+  const alertMonth = month === 5 || month === 10;
+
+  return (
+    <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-slate-950">Synthetic Population Sample</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            This synthetic population is generated monthly and scored through the live XGBoost model.
+          </p>
+        </div>
+        <a
+          href={`${API}/fairness/${month}/population.csv`}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-center text-sm font-black text-white"
+        >
+          Download 500-Person CSV
+        </a>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-lg bg-slate-50 p-3">
+          <div className="text-xs font-black uppercase text-slate-500">Applicants</div>
+          <div className="mt-1 text-xl font-black text-slate-950">{population.length || 500}</div>
+        </div>
+        <div className="rounded-lg bg-green-50 p-3">
+          <div className="text-xs font-black uppercase text-green-700">Approved</div>
+          <div className="mt-1 text-xl font-black text-green-700">{approvedCount}</div>
+        </div>
+        <div className="rounded-lg bg-red-50 p-3">
+          <div className="text-xs font-black uppercase text-red-700">Rejected</div>
+          <div className="mt-1 text-xl font-black text-red-700">{rejectedCount}</div>
+        </div>
+        <div className={`rounded-lg p-3 ${alertMonth ? "bg-red-50" : "bg-green-50"}`}>
+          <div className={`text-xs font-black uppercase ${alertMonth ? "text-red-700" : "text-green-700"}`}>Month Status</div>
+          <div className={`mt-1 text-sm font-black ${alertMonth ? "text-red-700" : "text-green-700"}`}>
+            {alertMonth ? "Alert month" : "Balanced"}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"
+          placeholder="Search ID, group, decision"
+        />
+        <select value={decision} onChange={(event) => setDecision(event.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">
+          <option value="all">All Decisions</option>
+          <option value="APPROVE">Approve</option>
+          <option value="REJECT">Reject</option>
+        </select>
+        <select value={gender} onChange={(event) => setGender(event.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">
+          <option value="all">All Genders</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+        </select>
+        <select value={geography} onChange={(event) => setGeography(event.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">
+          <option value="all">All Geographies</option>
+          <option value="urban">Urban</option>
+          <option value="semi-urban">Semi-Urban</option>
+          <option value="rural">Rural</option>
+        </select>
+      </div>
+
+      {loading ? (
+        <div className="mt-4 grid gap-3">
+          <div className="h-10 rounded-lg skeleton" />
+          <div className="h-10 rounded-lg skeleton" />
+          <div className="h-10 rounded-lg skeleton" />
+          <div className="h-10 rounded-lg skeleton" />
+        </div>
+      ) : (
+        <>
+          <p className="mt-4 text-xs font-bold text-slate-500">
+            Showing {previewRows.length} of {filtered.length} matching rows. The full set is available in the CSV download.
+          </p>
+          <div className="mt-3 max-h-[460px] overflow-auto rounded-lg border border-slate-200">
+            <table className="min-w-[1120px] w-full text-left text-xs">
+              <thead className="sticky top-0 bg-slate-50 font-black uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-3 py-3">ID</th>
+                  <th className="px-3 py-3">Gender</th>
+                  <th className="px-3 py-3">Age Group</th>
+                  <th className="px-3 py-3">Geography</th>
+                  <th className="px-3 py-3">Income</th>
+                  <th className="px-3 py-3">EMI Ratio</th>
+                  <th className="px-3 py-3">Loans</th>
+                  <th className="px-3 py-3">Late Pays</th>
+                  <th className="px-3 py-3">Credit History</th>
+                  <th className="px-3 py-3">Loan Amount</th>
+                  <th className="px-3 py-3">Default Risk</th>
+                  <th className="px-3 py-3">Decision</th>
+                  <th className="px-3 py-3">Actual Default</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previewRows.map((person) => (
+                  <tr key={person.person_id} className="border-t border-slate-100">
+                    <td className="px-3 py-3 font-black text-slate-900">#{person.person_id}</td>
+                    <td className="px-3 py-3 font-semibold text-slate-700">{titleCase(person.gender)}</td>
+                    <td className="px-3 py-3 font-semibold text-slate-700">{person.age_group}</td>
+                    <td className="px-3 py-3 font-semibold text-slate-700">{titleCase(person.geography)}</td>
+                    <td className="px-3 py-3 font-bold text-slate-900">{money(person.monthly_income)}</td>
+                    <td className="px-3 py-3 font-bold text-slate-900">{percent(person.emi_to_income_ratio)}</td>
+                    <td className="px-3 py-3 text-slate-700">{person.num_active_loans}</td>
+                    <td className="px-3 py-3 text-slate-700">{person.num_late_payments}</td>
+                    <td className="px-3 py-3 text-slate-700">{person.credit_history_months} mo</td>
+                    <td className="px-3 py-3 font-bold text-slate-900">{money(person.loan_amount)}</td>
+                    <td className="px-3 py-3 font-bold text-slate-900">{percent(person.predicted_default_risk)}</td>
+                    <td className="px-3 py-3">
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-black text-white ${person.decision === "APPROVE" ? "bg-green-600" : "bg-red-600"}`}>
+                        {person.decision}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 font-bold text-slate-700">{person.actual_default ? "Yes" : "No"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -136,6 +297,8 @@ export default function FairnessMonitor() {
   const location = useLocation();
   const [month, setMonth] = useState(1);
   const [data, setData] = useState(null);
+  const [population, setPopulation] = useState([]);
+  const [populationLoading, setPopulationLoading] = useState(false);
   const [mode, setMode] = useState("parity");
   const [logging, setLogging] = useState(false);
   const [draft, setDraft] = useState("");
@@ -143,6 +306,11 @@ export default function FairnessMonitor() {
 
   useEffect(() => {
     fetch(`${API}/fairness/${month}`).then((r) => r.json()).then(setData);
+    setPopulationLoading(true);
+    fetch(`${API}/fairness/${month}/population`)
+      .then((r) => r.json())
+      .then(setPopulation)
+      .finally(() => setPopulationLoading(false));
   }, [month]);
 
   const rows = useMemo(() => (data ? flattenRows(data) : []), [data]);
@@ -182,13 +350,31 @@ export default function FairnessMonitor() {
       <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <label className="text-sm font-black text-slate-900">Synthetic population month: {month}</label>
         <p className="mt-1 text-xs font-bold text-slate-500">500 generated applicants are scored through the trained XGBoost model for each month.</p>
+        <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-bold leading-6 text-blue-900">
+          Demo story: Month 5 simulates gender drift. Month 10 simulates rural access risk. The monitor catches both before the next approval batch.
+        </div>
         {location.state?.highlight && (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-black text-amber-800">
             Bias review context: {location.state.highlight}
           </div>
         )}
         <input className="mt-4 w-full accent-blue-600" type="range" min="1" max="12" value={month} onChange={(e) => setMonth(Number(e.target.value))} />
+        <div className="mt-4 grid grid-cols-6 gap-2 sm:grid-cols-12">
+          {Array.from({ length: 12 }, (_, index) => index + 1).map((item) => (
+            <button
+              key={item}
+              onClick={() => setMonth(item)}
+              className={`rounded-lg px-2 py-2 text-xs font-black transition ${
+                item === month ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              M{item}
+            </button>
+          ))}
+        </div>
       </section>
+
+      <PopulationTable month={month} population={population} loading={populationLoading} />
 
       <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {dimensions.map(([key, title]) => <ChartCard key={key} title={title} values={data[key]} mode={mode} />)}

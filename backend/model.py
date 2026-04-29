@@ -32,6 +32,10 @@ APPLICANTS: list[dict[str, Any]] = [
         "age_group": "18-30",
         "geography": "tier2",
         "gender": "male",
+        "collateral_type": "Shop inventory",
+        "collateral_value": 120000,
+        "collateral_verified": "pending",
+        "collateral_notes": "Auto parts stock estimate pending field verification.",
         "expected_decision": "REJECT",
         "expected_confidence": 0.84,
         "primary_reject_reason": "Monthly EMI burden is 2.4x the safe threshold",
@@ -61,6 +65,10 @@ APPLICANTS: list[dict[str, Any]] = [
         "age_group": "31-45",
         "geography": "metro",
         "gender": "female",
+        "collateral_type": "Residential property co-ownership",
+        "collateral_value": 900000,
+        "collateral_verified": "verified",
+        "collateral_notes": "Property papers verified during preliminary review.",
         "expected_decision": "APPROVE",
         "expected_confidence": 0.91,
     },
@@ -83,6 +91,10 @@ APPLICANTS: list[dict[str, Any]] = [
         "age_group": "46+",
         "geography": "tier2",
         "gender": "male",
+        "collateral_type": "None",
+        "collateral_value": 0,
+        "collateral_verified": "unavailable",
+        "collateral_notes": "Applicant did not pledge collateral for this personal loan.",
         "expected_decision": "REJECT",
         "expected_confidence": 0.76,
     },
@@ -105,6 +117,10 @@ APPLICANTS: list[dict[str, Any]] = [
         "age_group": "31-45",
         "geography": "rural",
         "gender": "female",
+        "collateral_type": "Agricultural equipment",
+        "collateral_value": 65000,
+        "collateral_verified": "pending",
+        "collateral_notes": "Equipment ownership needs panchayat and invoice verification.",
         "expected_decision": "REJECT",
         "expected_confidence": 0.68,
     },
@@ -127,8 +143,132 @@ APPLICANTS: list[dict[str, Any]] = [
         "age_group": "18-30",
         "geography": "metro",
         "gender": "male",
+        "collateral_type": "Business receivables",
+        "collateral_value": 550000,
+        "collateral_verified": "verified",
+        "collateral_notes": "Receivables and GST filings verified for business expansion.",
         "expected_decision": "APPROVE",
         "expected_confidence": 0.94,
+    },
+    {
+        "id": 6,
+        "name": "Meena Ramesh",
+        "age": 29,
+        "city": "Erode",
+        "loan_purpose": "Education Loan",
+        "loan_amount": 150000,
+        "monthly_income": 55000,
+        "num_active_loans": 0,
+        "monthly_emi_total": 5000,
+        "emi_to_income_ratio": 0.09,
+        "credit_history_months": 72,
+        "num_late_payments": 0,
+        "employment_months": 54,
+        "age_group": "18-30",
+        "geography": "tier2",
+        "gender": "female",
+        "collateral_type": "Family fixed deposit",
+        "collateral_value": 180000,
+        "collateral_verified": "verified",
+        "collateral_notes": "Fixed deposit lien letter available for education loan.",
+        "expected_decision": "APPROVE",
+        "expected_confidence": 0.88,
+    },
+    {
+        "id": 7,
+        "name": "Karthik Subramanian",
+        "age": 39,
+        "city": "Salem",
+        "loan_purpose": "Vehicle Loan",
+        "loan_amount": 350000,
+        "monthly_income": 28000,
+        "num_active_loans": 4,
+        "monthly_emi_total": 22000,
+        "emi_to_income_ratio": 0.79,
+        "credit_history_months": 14,
+        "num_late_payments": 4,
+        "employment_months": 18,
+        "age_group": "31-45",
+        "geography": "tier2",
+        "gender": "male",
+        "collateral_type": "Two-wheeler resale value",
+        "collateral_value": 90000,
+        "collateral_verified": "pending",
+        "collateral_notes": "Vehicle valuation pending; current EMI stress remains high.",
+        "expected_decision": "REJECT",
+        "expected_confidence": 0.82,
+    },
+    {
+        "id": 8,
+        "name": "Nandhini Venkatesh",
+        "age": 42,
+        "city": "Chennai",
+        "loan_purpose": "Medical Equipment Loan",
+        "loan_amount": 650000,
+        "monthly_income": 105000,
+        "num_active_loans": 1,
+        "monthly_emi_total": 18000,
+        "emi_to_income_ratio": 0.17,
+        "credit_history_months": 96,
+        "num_late_payments": 0,
+        "employment_months": 120,
+        "age_group": "31-45",
+        "geography": "metro",
+        "gender": "female",
+        "collateral_type": "Medical equipment",
+        "collateral_value": 500000,
+        "collateral_verified": "verified",
+        "collateral_notes": "Vendor quotation and asset serial details verified.",
+        "expected_decision": "APPROVE",
+        "expected_confidence": 0.9,
+    },
+    {
+        "id": 9,
+        "name": "Suresh Kumar",
+        "age": 47,
+        "city": "Thanjavur",
+        "loan_purpose": "Agriculture Equipment Loan",
+        "loan_amount": 180000,
+        "monthly_income": 22000,
+        "num_active_loans": 3,
+        "monthly_emi_total": 15000,
+        "emi_to_income_ratio": 0.68,
+        "credit_history_months": 10,
+        "num_late_payments": 5,
+        "employment_months": 180,
+        "age_group": "46+",
+        "geography": "rural",
+        "gender": "male",
+        "collateral_type": "Tractor attachment",
+        "collateral_value": 140000,
+        "collateral_verified": "pending",
+        "collateral_notes": "Asset exists, but ownership documents are incomplete.",
+        "expected_decision": "REJECT",
+        "expected_confidence": 0.8,
+    },
+    {
+        "id": 10,
+        "name": "Farzana Begum",
+        "age": 33,
+        "city": "Trichy",
+        "loan_purpose": "Small Business Working Capital",
+        "loan_amount": 275000,
+        "monthly_income": 42000,
+        "num_active_loans": 2,
+        "monthly_emi_total": 15500,
+        "emi_to_income_ratio": 0.37,
+        "credit_history_months": 30,
+        "num_late_payments": 1,
+        "employment_months": 36,
+        "age_group": "31-45",
+        "geography": "tier2",
+        "gender": "female",
+        "collateral_type": "Shop equipment",
+        "collateral_value": 210000,
+        "collateral_verified": "pending",
+        "collateral_notes": "Working capital collateral is partially documented.",
+        "expected_decision": "BORDERLINE",
+        "expected_confidence": 0.62,
     },
 ]
 
@@ -194,6 +334,8 @@ def map_applicant_to_uci(applicant: dict[str, Any]) -> dict[str, float]:
     active_loans = float(applicant.get("num_active_loans", 1))
     credit_history_months = float(applicant.get("credit_history_months", 36))
     employment_months = float(applicant.get("employment_months", 36))
+    credit_score = float(applicant.get("credit_score", 700))
+    score_pressure = float(np.clip((700 - credit_score) / 400, -0.45, 1.0))
 
     short_history_penalty = 2.0 if credit_history_months < 12 else 0.0
     short_employment_penalty = 1.0 if employment_months < 12 else 0.0
@@ -204,13 +346,15 @@ def map_applicant_to_uci(applicant: dict[str, Any]) -> dict[str, float]:
             + max(0.0, active_loans - 2) * 0.5
             + short_history_penalty
             + short_employment_penalty
+            + score_pressure * 2.4
         ),
         -1,
         8,
     )
-    utilization_rate = float(np.clip(0.18 + emi_ratio * 0.92 + active_loans * 0.035 + late_payments * 0.035, 0.02, 1.35))
+    utilization_rate = float(np.clip(0.18 + emi_ratio * 0.92 + active_loans * 0.035 + late_payments * 0.035 + score_pressure * 0.16, 0.02, 1.35))
     bill_amt1 = float(np.clip(limit_bal * utilization_rate, 1_000, limit_bal * 1.5))
-    pay_amt1 = float(np.clip(max(emi_total, bill_amt1 * (0.05 + max(0.0, 0.42 - emi_ratio) * 0.22)), 0, bill_amt1))
+    payment_health = 0.05 + max(0.0, 0.42 - emi_ratio) * 0.22 - max(0.0, score_pressure) * 0.04 + max(0.0, -score_pressure) * 0.05
+    pay_amt1 = float(np.clip(max(emi_total, bill_amt1 * payment_health), 0, bill_amt1))
     payment_ratio = float(pay_amt1 / (bill_amt1 + 1))
 
     return {
@@ -277,6 +421,8 @@ def model_bundle() -> dict[str, Any]:
         "precision": float(precision_score(y, train_predictions, zero_division=0)),
         "recall": float(recall_score(y, train_predictions, zero_division=0)),
         "feature_importance": feature_importance,
+        "feature_means": x.mean(axis=0),
+        "feature_stds": x.std(axis=0),
     }
 
 
@@ -305,18 +451,252 @@ def predict(applicant: dict[str, Any]) -> dict[str, Any]:
     confidence = _decision_confidence(reject_probability)
     shap_values = np.asarray(bundle["explainer"].shap_values(row))[0]
     approval_contributions = -shap_values
+    raw_order = np.argsort(np.abs(approval_contributions))[::-1]
+    raw_top_factor = _factor_for(FEATURE_COLUMNS[raw_order[0]], approval_contributions[raw_order[0]])
     order = np.argsort(np.abs(approval_contributions))[::-1][:3]
     factors = [_factor_for(FEATURE_COLUMNS[index], approval_contributions[index]) for index in order]
+    anomaly = _detect_anomaly(row[0], confidence, factors[0], bundle)
     return {
         "decision": decision,
         "confidence": round(float(confidence), 4),
         "reject_probability": round(float(reject_probability), 4),
         "shap_factors": factors,
+        "anomaly": anomaly,
         "model": "XGBoostClassifier + SHAP TreeExplainer",
     }
 
 
+def _detect_anomaly(row: np.ndarray, confidence: float, top_factor: dict[str, Any], bundle: dict[str, Any]) -> dict[str, Any]:
+    if 0.45 <= confidence <= 0.55:
+        return {
+            "status": "BORDERLINE",
+            "reason": "Model confidence below threshold — recommend human review",
+        }
+
+    source_feature = top_factor.get("source_feature")
+    if source_feature in FEATURE_COLUMNS:
+        index = FEATURE_COLUMNS.index(source_feature)
+        std = float(bundle["feature_stds"][index])
+        mean = float(bundle["feature_means"][index])
+        value = float(row[index])
+        if std > 0 and abs(value - mean) > 2 * std:
+            return {
+                "status": "OUTLIER_FEATURE",
+                "reason": f"Unusual {top_factor['feature']} value detected — outside normal applicant distribution",
+                "feature_name": top_factor["feature"],
+                "feature_value": round(value, 4),
+                "training_mean": round(mean, 4),
+                "training_std": round(std, 4),
+            }
+
+    return {"status": "NORMAL", "reason": "No anomaly detected"}
+
+
 def predict_custom(inputs: dict[str, Any]) -> dict[str, Any]:
+    applicant = _custom_payload_to_applicant(inputs)
+    monthly_income = float(inputs["monthly_income"])
+    emi_amount = float(inputs["emi_amount"])
+    credit_score = float(inputs["credit_score"])
+    credit_age_months = float(inputs["credit_age_months"])
+    num_defaults = float(inputs["num_defaults"])
+    loan_amount = float(inputs["loan_amount"])
+
+    row = encode_applicant(applicant).reshape(1, -1)
+    bundle = model_bundle()
+    reject_probability = float(bundle["model"].predict_proba(row)[0, 1])
+    decision = "REJECT" if reject_probability >= REJECTION_THRESHOLD else "APPROVE"
+    confidence = _decision_confidence(reject_probability)
+    shap_values = np.asarray(bundle["explainer"].shap_values(row))[0]
+    approval_contributions = -shap_values
+    raw_order = np.argsort(np.abs(approval_contributions))[::-1]
+    raw_top_factor = _factor_for(FEATURE_COLUMNS[raw_order[0]], approval_contributions[raw_order[0]])
+
+    uci_contributions = dict(zip(FEATURE_COLUMNS, approval_contributions))
+    raw_shap_map = dict(zip(FEATURE_COLUMNS, shap_values))
+    model_feature_values = dict(zip(FEATURE_COLUMNS, row[0]))
+    score_penalty = max(0.0, (720 - credit_score) / 420)
+    score_strength = max(0.0, (credit_score - 650) / 250)
+    short_history = 1.0 if credit_age_months < 12 else max(0.0, (36 - credit_age_months) / 30)
+    default_weight = min(1.0, num_defaults / 5) if num_defaults else 0.0
+    emi_stress = min(1.0, emi_amount / monthly_income)
+    loan_weight = min(1.0, loan_amount / 1_000_000)
+    source_buckets: dict[str, list[dict[str, Any]]] = {
+        "Monthly Income": [
+            {"source_feature": "BILL_AMT1", "source_label": "Latest Bill Amount", "weight": 0.4, "note": "Income capacity vs outstanding bill"},
+            {"source_feature": "utilization_rate", "source_label": "Utilization Rate", "weight": 0.45, "note": "Higher utilization reduces disposable buffer"},
+            {"source_feature": "payment_ratio", "source_label": "Payment Ratio", "weight": 0.15, "note": "Healthy repayment coverage offsets risk"},
+        ],
+        "EMI Amount": [
+            {"source_feature": "payment_ratio", "source_label": "Payment Ratio", "weight": 0.25, "note": "Payment ratio influence on EMI stress"},
+            {
+                "source_feature": "PAY_AMT1",
+                "source_label": "Latest Payment Amount",
+                "weight": 0.3 if emi_stress <= 0.35 else -0.35,
+                "note": "High EMI stress can invert payment impact",
+            },
+            {
+                "source_feature": "utilization_rate",
+                "source_label": "Utilization Rate",
+                "weight": 0.25 + emi_stress * 0.35,
+                "note": "EMI stress amplifies utilization pressure",
+            },
+        ],
+        "Credit Score": [
+            {
+                "source_feature": "PAY_0",
+                "source_label": "Repayment Status",
+                "weight": 0.18 + score_penalty * 0.55 + score_strength * 0.16,
+                "note": "Credit score shifts repayment-status severity",
+            },
+            {
+                "source_feature": "utilization_rate",
+                "source_label": "Utilization Rate",
+                "weight": score_penalty * 0.25 - score_strength * 0.08,
+                "note": "Low score magnifies utilization risk",
+            },
+        ],
+        "Credit History": [
+            {
+                "source_feature": "PAY_0",
+                "source_label": "Repayment Status",
+                "weight": short_history * 0.35,
+                "note": "Short history increases repayment-status uncertainty",
+            },
+        ],
+        "Past Defaults": [
+            {
+                "source_feature": "PAY_0",
+                "source_label": "Repayment Status",
+                "weight": max(0.2, default_weight) * 0.75,
+                "note": "More defaults increase repayment-status penalty",
+            },
+        ],
+        "Loan Amount": [
+            {"source_feature": "LIMIT_BAL", "source_label": "Credit Limit", "weight": 1.0, "note": "Requested amount maps directly to exposure"},
+            {
+                "source_feature": "BILL_AMT1",
+                "source_label": "Latest Bill Amount",
+                "weight": loan_weight * 0.35,
+                "note": "Larger loan amount scales outstanding-balance pressure",
+            },
+        ],
+    }
+
+    aggregated = []
+    aggregation_trace = []
+    for label, components in source_buckets.items():
+        resolved_components = []
+        for component in components:
+            source_feature = str(component["source_feature"])
+            source_label = str(component["source_label"])
+            weight = float(component["weight"])
+            source_contribution = float(uci_contributions[source_feature])
+            weighted_contribution = source_contribution * weight
+            resolved_components.append(
+                {
+                    "source_feature": source_feature,
+                    "source_label": source_label,
+                    "weight": round(weight, 4),
+                    "source_contribution": round(source_contribution, 4),
+                    "weighted_contribution": round(weighted_contribution, 4),
+                    "note": str(component["note"]),
+                }
+            )
+
+        value = sum(float(item["weighted_contribution"]) for item in resolved_components)
+        strongest_source = max(resolved_components, key=lambda item: abs(float(item["weighted_contribution"])))
+        aggregated.append(
+            {
+                "feature": label,
+                "value": round(float(value), 4),
+                "impact": round(float(value), 4),
+                "source": strongest_source["source_label"],
+            }
+        )
+        aggregation_trace.append(
+            {
+                "input_feature": label,
+                "impact": round(float(value), 4),
+                "components": resolved_components,
+            }
+        )
+
+    aggregated.sort(key=lambda item: abs(item["impact"]), reverse=True)
+    aggregation_trace.sort(key=lambda item: abs(float(item["impact"])), reverse=True)
+    top = aggregated[0]
+    direction = "helps approval" if top["impact"] > 0 else "increases rejection risk"
+
+    raw_shap_rows = []
+    for feature in FEATURE_COLUMNS:
+        model_value = float(model_feature_values[feature])
+        shap_raw = float(raw_shap_map[feature])
+        approval_impact = float(uci_contributions[feature])
+        raw_shap_rows.append(
+            {
+                "source_feature": feature,
+                "feature": FEATURE_LABELS[feature],
+                "model_feature_value": round(model_value, 4),
+                "shap_raw": round(shap_raw, 4),
+                "approval_impact": round(approval_impact, 4),
+                "direction": "helps approval" if approval_impact >= 0 else "increases rejection risk",
+                "abs_approval_impact": round(abs(approval_impact), 4),
+            }
+        )
+    raw_shap_rows.sort(key=lambda item: abs(float(item["approval_impact"])), reverse=True)
+
+    expected_value_raw = bundle["explainer"].expected_value
+    if isinstance(expected_value_raw, np.ndarray):
+        expected_values = [round(float(value), 4) for value in expected_value_raw.tolist()]
+        base_value = float(expected_value_raw.ravel()[0])
+    elif isinstance(expected_value_raw, (list, tuple)):
+        expected_values = [round(float(value), 4) for value in expected_value_raw]
+        base_value = float(expected_value_raw[0])
+    else:
+        expected_values = [round(float(expected_value_raw), 4)]
+        base_value = float(expected_value_raw)
+
+    model_output_raw = float(base_value + float(np.sum(shap_values)))
+    threshold_margin = float(reject_probability - REJECTION_THRESHOLD)
+    return {
+        "decision": decision,
+        "confidence": round(float(confidence), 4),
+        "reject_probability": round(float(reject_probability), 4),
+        "shap_values": aggregated,
+        "top_reason": f"{top['feature']} {direction}",
+        "anomaly": _detect_anomaly(row[0], confidence, raw_top_factor, bundle),
+        "shap_trace": {
+            "model_name": "XGBoostClassifier + SHAP TreeExplainer",
+            "model_feature_inputs": [
+                {
+                    "source_feature": feature,
+                    "feature": FEATURE_LABELS[feature],
+                    "value": round(float(model_feature_values[feature]), 4),
+                }
+                for feature in FEATURE_COLUMNS
+            ],
+            "raw_shap": {
+                "explanation": "Raw SHAP values are in model output space. Approval impact is the negated SHAP value because positive SHAP here increases default risk.",
+                "expected_values": expected_values,
+                "base_value_used": round(float(base_value), 4),
+                "model_output_reconstructed": round(model_output_raw, 4),
+                "rows": raw_shap_rows,
+            },
+            "aggregation": {
+                "explanation": "UI-level applicant factors are computed as weighted combinations of model-feature approval impacts.",
+                "rows": aggregation_trace,
+            },
+            "decision_math": {
+                "reject_probability": round(float(reject_probability), 4),
+                "threshold": round(float(REJECTION_THRESHOLD), 4),
+                "threshold_margin": round(threshold_margin, 4),
+                "decision": decision,
+                "confidence": round(float(confidence), 4),
+            },
+        },
+    }
+
+
+def _custom_payload_to_applicant(inputs: dict[str, Any]) -> dict[str, Any]:
     monthly_income = max(float(inputs["monthly_income"]), 1.0)
     emi_amount = float(inputs["emi_amount"])
     credit_score = float(inputs["credit_score"])
@@ -324,10 +704,11 @@ def predict_custom(inputs: dict[str, Any]) -> dict[str, Any]:
     num_defaults = float(inputs["num_defaults"])
     loan_amount = float(inputs["loan_amount"])
 
-    score_penalty_defaults = max(0, int((700 - credit_score) // 80))
-    inferred_late_payments = int(min(9, max(num_defaults, num_defaults + score_penalty_defaults)))
+    score_pressure = max(0.0, (720 - credit_score) / 420)
+    score_bonus = max(0.0, (credit_score - 700) / 220)
+    inferred_late_payments = float(np.clip(num_defaults + score_pressure * 3.8 - score_bonus * 0.8, 0, 9))
     inferred_active_loans = int(min(6, max(1, round(emi_amount / max(monthly_income * 0.18, 1)) + num_defaults)))
-    applicant = {
+    return {
         "monthly_income": monthly_income,
         "num_active_loans": inferred_active_loans,
         "monthly_emi_total": emi_amount,
@@ -339,71 +720,13 @@ def predict_custom(inputs: dict[str, Any]) -> dict[str, Any]:
         "age": 32,
         "gender": "male",
         "geography": "tier2",
+        "credit_score": credit_score,
     }
 
-    row = encode_applicant(applicant).reshape(1, -1)
-    bundle = model_bundle()
-    reject_probability = float(bundle["model"].predict_proba(row)[0, 1])
-    decision = "REJECT" if reject_probability >= REJECTION_THRESHOLD else "APPROVE"
-    confidence = _decision_confidence(reject_probability)
-    shap_values = np.asarray(bundle["explainer"].shap_values(row))[0]
-    approval_contributions = -shap_values
 
-    uci_contributions = dict(zip(FEATURE_COLUMNS, approval_contributions))
-    score_penalty = max(0.0, (700 - credit_score) / 400)
-    short_history = 1.0 if credit_age_months < 12 else max(0.0, (36 - credit_age_months) / 30)
-    default_weight = min(1.0, num_defaults / 5) if num_defaults else 0.0
-    emi_stress = min(1.0, emi_amount / monthly_income)
-    loan_weight = min(1.0, loan_amount / 1_000_000)
-    source_buckets = {
-        "Monthly Income": {
-            "Latest Bill Amount": uci_contributions["BILL_AMT1"] * 0.4,
-            "Utilization Rate": uci_contributions["utilization_rate"] * 0.45,
-            "Payment Ratio": uci_contributions["payment_ratio"] * 0.15,
-        },
-        "EMI Amount": {
-            "Payment Ratio": uci_contributions["payment_ratio"] * 0.25,
-            "Latest Payment Amount": uci_contributions["PAY_AMT1"] * (0.3 if emi_stress <= 0.35 else -0.35),
-            "Utilization Rate": uci_contributions["utilization_rate"] * (0.25 + emi_stress * 0.35),
-        },
-        "Credit Score": {
-            "Repayment Status": uci_contributions["PAY_0"] * score_penalty * 0.45,
-        },
-        "Credit History": {
-            "Repayment Status": uci_contributions["PAY_0"] * short_history * 0.35,
-        },
-        "Past Defaults": {
-            "Repayment Status": uci_contributions["PAY_0"] * max(0.2, default_weight) * 0.75,
-        },
-        "Loan Amount": {
-            "Credit Limit": uci_contributions["LIMIT_BAL"],
-            "Latest Bill Amount": uci_contributions["BILL_AMT1"] * loan_weight * 0.35,
-        },
-    }
-
-    aggregated = []
-    for label, sources in source_buckets.items():
-        value = sum(float(contribution) for contribution in sources.values())
-        strongest_source = max(sources.items(), key=lambda item: abs(item[1]))[0]
-        aggregated.append(
-            {
-                "feature": label,
-                "value": round(float(value), 4),
-                "impact": round(float(value), 4),
-                "source": strongest_source,
-            }
-        )
-
-    aggregated.sort(key=lambda item: abs(item["impact"]), reverse=True)
-    top = aggregated[0]
-    direction = "helps approval" if top["impact"] > 0 else "increases rejection risk"
-    return {
-        "decision": decision,
-        "confidence": round(float(confidence), 4),
-        "reject_probability": round(float(reject_probability), 4),
-        "shap_values": aggregated,
-        "top_reason": f"{top['feature']} {direction}",
-    }
+def _reject_probability_for_custom(inputs: dict[str, Any]) -> float:
+    row = encode_applicant(_custom_payload_to_applicant(inputs)).reshape(1, -1)
+    return float(model_bundle()["model"].predict_proba(row)[0, 1])
 
 
 def model_info() -> dict[str, Any]:
@@ -428,6 +751,7 @@ def model_info() -> dict[str, Any]:
             "Demographic attributes are monitored using synthetic audit populations because the UCI dataset does not include Indian protected-attribute coverage.",
             "The demo does not integrate live bureau tradeline data or multi-bureau reconciliation.",
             "The sandbox uses one bureau-style repayment score adapter rather than multiple independent bureau scores.",
+            "Collateral is recorded as application context and audit evidence, but it is not used as a model feature because the UCI credit-card dataset has no collateral attributes.",
         ],
         "fairness_statement": "VaazhlaiPartner monitors gender, age group, and geography using demographic parity and the 4/5ths rule, with equalized-odds diagnostics shown for false positive and false negative rates.",
     }
@@ -493,6 +817,34 @@ def fairness_for_month(month: int) -> dict[str, Any]:
         "geography": {key: value["approval_rate"] for key, value in geography.items()},
         "alerts": alerts,
     }
+
+
+def fairness_population_for_month(month: int) -> list[dict[str, Any]]:
+    month = max(1, min(12, int(month)))
+    population = _synthetic_fairness_population(month)
+    rows = [encode_applicant(applicant) for applicant in population]
+    probabilities = model_bundle()["model"].predict_proba(np.asarray(rows))[:, 1]
+    output = []
+    for index, (applicant, probability) in enumerate(zip(population, probabilities), start=1):
+        decision = "REJECT" if probability >= REJECTION_THRESHOLD else "APPROVE"
+        output.append(
+            {
+                "person_id": index,
+                "gender": applicant["gender"],
+                "age_group": applicant["age_group"],
+                "geography": applicant["geography"],
+                "monthly_income": round(float(applicant["monthly_income"]), 2),
+                "emi_to_income_ratio": round(float(applicant["emi_to_income_ratio"]), 4),
+                "num_active_loans": int(applicant["num_active_loans"]),
+                "num_late_payments": int(applicant["num_late_payments"]),
+                "credit_history_months": round(float(applicant["credit_history_months"]), 1),
+                "loan_amount": round(float(applicant["loan_amount"]), 2),
+                "predicted_default_risk": round(float(probability), 4),
+                "decision": decision,
+                "actual_default": int(applicant["actual_default"]),
+            }
+        )
+    return output
 
 
 def _synthetic_fairness_population(month: int) -> list[dict[str, Any]]:
