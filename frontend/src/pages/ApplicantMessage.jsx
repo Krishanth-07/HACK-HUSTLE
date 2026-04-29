@@ -100,10 +100,18 @@ export default function ApplicantMessage() {
   const [language, setLanguage] = useState("ta");
   const [shared, setShared] = useState(false);
   const [reviewRequested, setReviewRequested] = useState(false);
+  const [customerReply, setCustomerReply] = useState(null);
 
   useEffect(() => {
     fetch(`${API}/applicant/${id}`).then((response) => response.json()).then(setApplicant);
   }, [id]);
+
+  useEffect(() => {
+    fetch(`${API}/customer-reply/${id}?language=${language}`)
+      .then((response) => response.json())
+      .then(setCustomerReply)
+      .catch((error) => console.error("Customer reply fetch error:", error));
+  }, [id, language]);
 
   const text = language === "ta";
   const approved = applicant?.prediction?.decision === "APPROVE";
@@ -130,9 +138,11 @@ export default function ApplicantMessage() {
   const terms = loanTerms(applicant);
   const steps = stepsFor(applicant);
   const caseId = `VP-REV-${String(applicant.id).padStart(3, "0")}-${new Date().getFullYear()}`;
-  const summary = approved
+  const replyText = text ? customerReply?.tamil_text : customerReply?.english_text;
+  const replySteps = text ? customerReply?.tamil_steps : customerReply?.english_steps;
+  const summary = replyText || (approved
     ? `VaazhlaiPartner: ${applicant.name} is approved for ${money(applicant.loan_amount)}. Confidence ${(applicant.prediction.confidence * 100).toFixed(1)}%.`
-    : `VaazhlaiPartner: ${applicant.name} was not approved right now. Top reason: ${applicant.prediction.shap_factors[0].plain_english}. Suggested next step: ${steps[0][1]}.`;
+    : `VaazhlaiPartner: ${applicant.name} was not approved right now. Top reason: ${applicant.prediction.shap_factors[0].plain_english}. Suggested next step: ${steps[0][1]}.`);
 
   const share = async () => {
     await navigator.clipboard?.writeText(summary);
@@ -194,9 +204,9 @@ export default function ApplicantMessage() {
               <Bubble>
                 <p className="font-black">{text ? `வணக்கம் ${displayName},` : `Hi ${displayName},`}</p>
                 <p className="mt-1">
-                  {text
+                  {replyText || (text
                     ? "உங்கள் கடன் விண்ணப்பம் இப்போது அனுமதிக்க இயலவில்லை. இது நிரந்தர மறுப்பு அல்ல; சில விஷயங்களை சரிசெய்தால் மீண்டும் தகுதி பெறலாம்."
-                    : "Your loan could not be approved right now. This is not permanent; you can improve eligibility by fixing a few factors."}
+                    : "Your loan could not be approved right now. This is not permanent; you can improve eligibility by fixing a few factors.")}
                 </p>
               </Bubble>
 
@@ -229,10 +239,9 @@ export default function ApplicantMessage() {
               <Bubble>
                 <p className="font-black">{text ? "செய்ய வேண்டிய படிகள்" : "Actionable steps"}</p>
                 <ol className="mt-2 list-decimal space-y-2 pl-5">
-                  {steps.map((step) => (
-                    <li key={step[0]}>
-                      <b>{text ? step[0] : step[1]}</b>
-                      <div className="text-xs opacity-80">{text ? step[2] : step[3]}</div>
+                  {(replySteps || steps.map((step) => (text ? step[0] : step[1]))).map((step) => (
+                    <li key={step}>
+                      <b>{step}</b>
                     </li>
                   ))}
                 </ol>

@@ -14,7 +14,10 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from model import fairness_for_month, get_applicant, predict
+try:
+    from .model import fairness_for_month, get_applicant, predict
+except ImportError:
+    from model import fairness_for_month, get_applicant, predict
 
 AUDIT_PATH = Path(__file__).resolve().parent / "audit_log.json"
 

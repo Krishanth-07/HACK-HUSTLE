@@ -9,8 +9,22 @@ from io import BytesIO, StringIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-from audit import build_report_pdf, read_audit_log, tamper_entry, verify_entries
-from model import fairness_for_month, fairness_population_for_month, get_applicant_with_prediction, get_applicants, model_info, predict, predict_custom
+try:
+    from .audit import build_report_pdf, read_audit_log, tamper_entry, verify_entries
+    from .model import (
+        fairness_for_month,
+        fairness_population_for_month,
+        generate_counterfactual,
+        generate_customer_reply,
+        get_applicant_with_prediction,
+        get_applicants,
+        model_info,
+        predict,
+        predict_custom,
+    )
+except ImportError:
+    from audit import build_report_pdf, read_audit_log, tamper_entry, verify_entries
+    from model import fairness_for_month, fairness_population_for_month, get_applicant_with_prediction, get_applicants, model_info, predict, predict_custom, generate_counterfactual, generate_customer_reply
 
 app = FastAPI(title="VaazhlaiPartner API")
 
@@ -45,6 +59,22 @@ def api_applicants():
 def api_applicant(applicant_id: int):
     try:
         return get_applicant_with_prediction(applicant_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Applicant not found") from exc
+
+
+@app.get("/api/counterfactual/{applicant_id}")
+def api_counterfactual(applicant_id: int):
+    try:
+        return generate_counterfactual(applicant_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Applicant not found") from exc
+
+
+@app.get("/api/customer-reply/{applicant_id}")
+def api_customer_reply(applicant_id: int, language: str = "ta"):
+    try:
+        return generate_customer_reply(applicant_id, language=language)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Applicant not found") from exc
 
@@ -193,3 +223,8 @@ def api_fairness_population_csv(month: int):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=fairness-population-month-{month}.csv"},
     )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

@@ -27,49 +27,6 @@ const urgency = {
   9: "bg-red-500",
   10: "bg-amber-500",
 };
-const messagePreview = {
-  1: {
-    tamil: "வணக்கம் ரஜன் அவர்களே, உங்கள் கடன் விண்ணப்பம் இப்போது அனுமதிக்க இயலவில்லை. முக்கிய காரணம்: கடந்த கட்டண பழக்கம் மற்றும் EMI சுமை அதிகமாக உள்ளது.",
-    steps: [
-      "HDFC personal loan-ஐ முதலில் மூடுங்கள். இது மாத EMI சுமையை சுமார் ₹4,200 குறைக்கும்.",
-      "அடுத்த 3 மாதங்களுக்கு எந்த EMI-யும் தாமதிக்காமல் செலுத்துங்கள்.",
-      "EMI/வருமான விகிதத்தை 40% க்குக் கீழே கொண்டு வந்து 6 மாதங்களுக்கு பிறகு மீண்டும் விண்ணப்பிக்கவும்.",
-    ],
-  },
-  2: {
-    tamil: "வணக்கம் பிரியா அவர்களே, உங்கள் கடன் விண்ணப்பம் அனுமதிக்க ஏற்ற நிலையில் உள்ளது. உங்கள் கட்டண பழக்கம் வலுவாக உள்ளது.",
-    steps: [
-      "வருமான ஆவணம், வங்கி அறிக்கை, அடையாள ஆவணங்களை தயார் வைத்திருக்கவும்.",
-      "தற்போதைய EMI கட்டணங்களை நேரத்தில் தொடருங்கள்.",
-      "ஆவண சரிபார்ப்பு முடிந்ததும் கடன் செயல்முறை அடுத்த கட்டத்திற்கு செல்லும்.",
-    ],
-  },
-  3: {
-    tamil: "வணக்கம் முருகேசன் அவர்களே, உங்கள் விண்ணப்பம் இப்போது அனுமதிக்க இயலவில்லை. குறுகிய கடன் வரலாறு மற்றும் வேலை நிலைத்தன்மை காரணமாக அபாயம் அதிகமாக உள்ளது.",
-    steps: [
-      "குறைந்தபட்சம் 6 மாதங்கள் தற்போதைய வேலைவாய்ப்பை தொடருங்கள்.",
-      "சிறிய அளவு கடன் அல்லது கிரெடிட் வசதியில் நேர்மையான கட்டண வரலாறு உருவாக்குங்கள்.",
-      "தாமதமின்றி 6 மாதங்கள் கட்டணம் செலுத்திய பிறகு குறைந்த கடன் தொகையுடன் மீண்டும் விண்ணப்பிக்கவும்.",
-    ],
-  },
-  4: {
-    tamil: "வணக்கம் செல்வி அவர்களே, உங்கள் விண்ணப்பம் இப்போது அனுமதிக்க இயலவில்லை. தாமத கட்டணங்கள் மற்றும் வருமான மாறுபாடு முடிவை பாதித்துள்ளன.",
-    steps: [
-      "நிலுவையில் உள்ள கட்டணங்களை முதலில் சரிசெய்யுங்கள்.",
-      "பருவகால வருமானத்திற்கு மாத சேமிப்பு கணக்கை தனியாக வைத்துக் கொள்ளுங்கள்.",
-      "₹50,000 க்கு பதிலாக குறைந்த தொகை அல்லது கூட்டுறவு/உத்தரவாத ஆதரவு உடன் 3-6 மாதங்களில் மீண்டும் விண்ணப்பிக்கவும்.",
-    ],
-  },
-  5: {
-    tamil: "வணக்கம் அருண் அவர்களே, உங்கள் கடன் விண்ணப்பம் அனுமதிக்க ஏற்ற நிலையில் உள்ளது. வருமானம் மற்றும் கட்டண வரலாறு வலுவாக உள்ளன.",
-    steps: [
-      "கடந்த 6 மாத வங்கி அறிக்கைகள் மற்றும் GST/வணிக ஆவணங்களை தயார் வைத்திருக்கவும்.",
-      "தற்போதைய EMI கட்டணங்களை நேரத்தில் தொடருங்கள்.",
-      "இறுதி ஆவண சரிபார்ப்புக்குப் பிறகு கடன் வழங்கல் செயல்முறை தொடரும்.",
-    ],
-  },
-};
-
 function money(value) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
 }
@@ -143,29 +100,6 @@ function verdictSentence(applicant) {
   return `Reject - ${prediction.shap_factors[0].plain_english}`;
 }
 
-function previewFor(applicant) {
-  const fixed = messagePreview[applicant.id];
-  if (fixed) return fixed;
-  const rejected = applicant.prediction?.decision === "REJECT";
-  const topFactor = applicant.prediction?.shap_factors?.[0];
-  return {
-    tamil: rejected
-      ? `Hi ${applicant.name}, your loan is not ready for approval right now. Main reason: ${topFactor?.plain_english || "risk factors need improvement"}.`
-      : `Hi ${applicant.name}, your loan is ready for the next approval step. Your repayment capacity and credit profile look positive.`,
-    steps: rejected
-      ? [
-          "Reduce monthly EMI burden before reapplying.",
-          "Keep every repayment on time for the next 3 months.",
-          "Reapply with updated income and loan documents after improvement.",
-        ]
-      : [
-          "Keep income and bank statements ready for verification.",
-          "Continue current on-time repayment behavior.",
-          "Proceed to documentation review for final approval.",
-        ],
-  };
-}
-
 export default function LoanOfficerCockpit() {
   const [applicants, setApplicants] = useState([]);
   const [modelInfo, setModelInfo] = useState(null);
@@ -173,6 +107,8 @@ export default function LoanOfficerCockpit() {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [counterfactual, setCounterfactual] = useState(null);
+  const [customerReply, setCustomerReply] = useState(null);
   const timer = useRef(null);
   const toastTimer = useRef(null);
   const navigate = useNavigate();
@@ -187,9 +123,25 @@ export default function LoanOfficerCockpit() {
   const selectApplicant = (id) => {
     setSelectedId(id);
     setLoading(true);
+    setCounterfactual(null);
+    setCustomerReply(null);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setLoading(false), 1500);
   };
+
+  useEffect(() => {
+    if (!selected?.id) return;
+
+    fetch(`${API}/counterfactual/${selected.id}`)
+      .then((response) => response.json())
+      .then(setCounterfactual)
+      .catch((error) => console.error("Counterfactual fetch error:", error));
+
+    fetch(`${API}/customer-reply/${selected.id}?language=ta`)
+      .then((response) => response.json())
+      .then(setCustomerReply)
+      .catch((error) => console.error("Customer reply fetch error:", error));
+  }, [selected?.id]);
 
   const exportAudit = () => {
     window.open(`${API}/audit/report`, "_blank");
@@ -215,12 +167,16 @@ export default function LoanOfficerCockpit() {
 
   const prediction = selected.prediction;
   const rejected = prediction.decision === "REJECT";
-  const currentPreview = previewFor(selected);
+  const currentPreview = customerReply || {
+    tamil_text: "",
+    tamil_steps: [],
+    source: "fallback",
+  };
   const anomaly = prediction.anomaly || { status: "NORMAL", reason: "No anomaly detected" };
   const anomalous = anomaly.status !== "NORMAL";
 
   return (
-    <main className="grid min-h-[calc(100vh-173px)] grid-cols-1 overflow-hidden lg:h-[calc(100vh-173px)] lg:grid-cols-[38%_62%]">
+    <main className="grid min-h-[calc(100vh-173px)] grid-cols-1 items-start overflow-x-hidden overflow-y-auto pb-10 lg:min-h-[calc(100vh-173px)] lg:h-auto lg:overflow-visible lg:grid-cols-[38%_62%]">
       <aside className="border-b border-slate-200 bg-white lg:border-b-0 lg:border-r">
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
           <h1 className="text-lg font-black text-slate-950">Pending Applications</h1>
@@ -253,7 +209,7 @@ export default function LoanOfficerCockpit() {
         </div>
       </aside>
 
-      <section className="overflow-auto bg-slate-50 p-4 sm:p-5">
+      <section className="min-h-0 overflow-visible bg-slate-50 p-4 sm:p-5">
         {loading ? (
           <div className="grid gap-4">
             <div className="h-36 rounded-xl skeleton" />
@@ -261,7 +217,7 @@ export default function LoanOfficerCockpit() {
             <div className="h-20 rounded-xl skeleton" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_220px]">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_280px] xl:items-start">
             <div className="grid gap-4">
               {anomalous && (
                 <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-black text-amber-900">
@@ -382,27 +338,65 @@ export default function LoanOfficerCockpit() {
               )}
             </div>
 
-            <aside className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h3 className="text-sm font-black text-slate-950">Message Preview</h3>
-              <div className="mt-3 h-[390px] overflow-hidden rounded-[24px] border-[8px] border-slate-950 bg-[#efe7dc]">
+            <aside className="self-start rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+              <h3 className="text-sm font-black text-slate-950">Customer Reply</h3>
+              <div className="mt-3 overflow-hidden rounded-[24px] border-[8px] border-slate-950 bg-[#efe7dc]">
                 <div className="bg-[#075e54] px-3 py-3 text-xs font-black text-white">VaazhlaiPartner</div>
-                <div className="h-[334px] overflow-y-auto px-3 pb-4">
-                  <div className="mt-3 rounded-lg bg-white p-3 text-[10.5px] leading-5 shadow">
+                <div className="px-3 py-3">
+                  <div className="rounded-lg bg-white p-3 text-[10.5px] leading-5 shadow">
                     <b>{selected.name}</b>
-                    <p className="mt-2 font-semibold text-slate-900">{currentPreview.tamil}</p>
+                    <p className="mt-2 font-semibold text-slate-900">{currentPreview.tamil_text || "Reply loading..."}</p>
                     <div className="mt-3 rounded-md bg-green-50 p-2 text-[10px] font-bold leading-4 text-green-800">
                       <div className="mb-1 text-[10.5px] font-black">தகுதி பெற செய்ய வேண்டியது:</div>
-                      <ol className="list-decimal space-y-1 pl-4">
-                        {currentPreview.steps.map((step) => (
+                      <ol className="list-decimal space-y-2 pl-4">
+                        {(currentPreview.tamil_steps || []).map((step) => (
                           <li key={step}>{step}</li>
                         ))}
                       </ol>
                     </div>
+                    {currentPreview.english_text && (
+                      <p className="mt-3 text-[10px] font-semibold leading-4 text-slate-500">{currentPreview.english_text}</p>
+                    )}
                   </div>
                 </div>
               </div>
               <button onClick={sendMessage} className="mt-3 w-full rounded-lg bg-green-600 px-3 py-3 text-sm font-black text-white">Send Message</button>
             </aside>
+
+            {counterfactual && counterfactual.counterfactual_decision === "APPROVE" && (
+              <aside className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-black text-slate-950">Counterfactual Explanation</h3>
+                  <span className="inline-block h-4 w-4 rounded-full bg-blue-600 text-[10px] font-black leading-4 text-white" title="Computed by finding the minimum feature change that crosses the model's 0.65 decision threshold">?</span>
+                </div>
+                {counterfactual.tamil_text && <p className="mt-2 text-sm font-bold text-slate-800">{counterfactual.tamil_text}</p>}
+                <div className="mt-3 space-y-2">
+                  {counterfactual.changes && counterfactual.changes.map((change, idx) => (
+                    <div key={idx} className="rounded-lg border border-blue-200 bg-white p-3">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="flex items-center gap-2 text-slate-900">
+                          <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-600" />
+                          {change.display_name}
+                        </span>
+                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ${change.actionable ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-600"}`}>
+                          {change.actionable ? "Actionable" : "Time-based"}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-[10px] text-slate-600">
+                        {change.feature === "emi_amount" && `₹${Math.round(change.original_value).toLocaleString()} → ₹${Math.round(change.new_value).toLocaleString()} (${change.change_pct}%)`}
+                        {change.feature === "credit_score" && `Score: ${Math.round(change.original_value)} → ${Math.round(change.new_value)}`}
+                        {change.feature === "num_defaults" && `Defaults: ${Math.round(change.original_value)} → ${Math.round(change.new_value)}`}
+                      </div>
+                      <p className="mt-1 text-[10px] text-slate-600">{change.description}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 text-xs font-semibold text-slate-700">
+                  <span className="font-black">Approval confidence:</span> {(counterfactual.original_confidence * 100).toFixed(1)}% → {(counterfactual.new_confidence * 100).toFixed(1)}%
+                </div>
+                <p className="mt-2 text-xs leading-4 text-slate-700">{counterfactual.plain_english}</p>
+              </aside>
+            )}
           </div>
         )}
       </section>

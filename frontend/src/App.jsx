@@ -1,5 +1,6 @@
 import { Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/Header.jsx";
+import Landing from "./pages/Landing.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import FairnessPage from "./pages/FairnessPage.jsx";
 import AuditPage from "./pages/AuditPage.jsx";
@@ -16,7 +17,8 @@ export default function App() {
       <Header />
       <div key={location.pathname} className="page-fade">
         <Routes location={location}>
-          <Route path="/" element={<ApplicationsPage />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/dashboard" element={<ApplicationsPage />} />
           <Route path="/applicant/:id" element={<ApplicantMessage />} />
           <Route path="/fairness" element={<FairnessPage />} />
           <Route path="/audit" element={<AuditPage />} />

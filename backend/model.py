@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
+import os
 from functools import lru_cache
+from itertools import combinations, product
 from pathlib import Path
 from typing import Any
 import urllib.request
+import urllib.error
 
 import numpy as np
 import pandas as pd
@@ -286,34 +290,43 @@ FEATURE_COLUMNS = [
     "payment_ratio",
 ]
 
+# Extended features computed during prediction (not in UCI dataset)
+EXTENDED_FEATURES = FEATURE_COLUMNS + ["credit_history_months", "num_late_payments"]
+
 FEATURE_LABELS = {
     "LIMIT_BAL": "Credit Limit",
     "AGE": "Age",
-    "PAY_0": "Repayment Status",
-    "BILL_AMT1": "Latest Bill Amount",
-    "PAY_AMT1": "Latest Payment Amount",
-    "utilization_rate": "Utilization Rate",
-    "payment_ratio": "Payment Ratio",
+    "PAY_0": "Payment History Status",
+    "BILL_AMT1": "Outstanding Bill",
+    "PAY_AMT1": "Recent Payment Amount",
+    "utilization_rate": "Credit Utilization Rate",
+    "payment_ratio": "Payment-to-Bill Ratio",
+    "credit_history_months": "Credit Tenure",
+    "num_late_payments": "Default History",
 }
 
 FACTOR_COPY = {
     "Credit Limit": ("Available credit capacity supports this application.", "Requested exposure is high for this risk profile."),
     "Age": ("Age profile is neutral to favorable.", "Age profile contributes modestly to risk."),
-    "Repayment Status": ("Recent repayment behavior is clean.", "Recent repayment delays increase default risk."),
-    "Latest Bill Amount": ("Current outstanding balance is manageable.", "Current outstanding balance is high."),
-    "Latest Payment Amount": ("Recent payment amount supports repayment capacity.", "Recent payment amount is weak relative to balance."),
-    "Utilization Rate": ("Credit utilization is within a healthier range.", "High credit utilization increases risk."),
-    "Payment Ratio": ("Recent payments cover a healthy share of the bill.", "Payments cover too little of the outstanding bill."),
+    "Payment History Status": ("Recent payment history is clean and on-time.", "Payment delays or defaults increase risk significantly."),
+    "Outstanding Bill": ("Current outstanding balance is manageable.", "Current outstanding balance is high relative to capacity."),
+    "Recent Payment Amount": ("Recent payments show strong repayment capacity.", "Recent payment amounts are weak relative to outstanding balance."),
+    "Credit Utilization Rate": ("Credit utilization is within healthy range.", "High credit utilization increases default risk."),
+    "Payment-to-Bill Ratio": ("Recent payments cover a healthy share of bills.", "Payments cover insufficient portion of outstanding bills."),
+    "Credit Tenure": ("Established credit history shows reliability.", "Limited credit history adds uncertainty to assessment."),
+    "Default History": ("Clean repayment record with no recent defaults.", "Past defaults or late payments significantly increase risk."),
 }
 
 ACTIONABLE = {
     "Credit Limit": True,
     "Age": False,
-    "Repayment Status": True,
-    "Latest Bill Amount": True,
-    "Latest Payment Amount": True,
-    "Utilization Rate": True,
-    "Payment Ratio": True,
+    "Payment History Status": True,
+    "Outstanding Bill": True,
+    "Recent Payment Amount": True,
+    "Credit Utilization Rate": True,
+    "Payment-to-Bill Ratio": True,
+    "Credit Tenure": False,
+    "Default History": True,
 }
 
 
@@ -365,6 +378,8 @@ def map_applicant_to_uci(applicant: dict[str, Any]) -> dict[str, float]:
         "PAY_AMT1": pay_amt1,
         "utilization_rate": utilization_rate,
         "payment_ratio": payment_ratio,
+        "credit_history_months": credit_history_months,
+        "num_late_payments": late_payments,
     }
 
 
@@ -727,6 +742,430 @@ def _custom_payload_to_applicant(inputs: dict[str, Any]) -> dict[str, Any]:
 def _reject_probability_for_custom(inputs: dict[str, Any]) -> float:
     row = encode_applicant(_custom_payload_to_applicant(inputs)).reshape(1, -1)
     return float(model_bundle()["model"].predict_proba(row)[0, 1])
+
+
+def _strip_json_code_fences(text: str) -> str:
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.split("\n", 1)[-1]
+    if cleaned.endswith("```"):
+        cleaned = cleaned.rsplit("```", 1)[0]
+    start = cleaned.find("{")
+    end = cleaned.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return cleaned[start : end + 1]
+    return cleaned
+
+
+def _normalize_steps(steps: list[Any], default_steps: list[str]) -> list[str]:
+    normalized: list[str] = []
+    for step in steps:
+        text = str(step).strip()
+        if text:
+            normalized.append(text)
+    if len(normalized) >= 3:
+        return normalized[:3]
+    for step in default_steps:
+        if len(normalized) >= 3:
+            break
+        if step not in normalized:
+            normalized.append(step)
+    return normalized[:3]
+
+
+def _call_llm_customer_reply(payload: dict[str, Any]) -> dict[str, Any] | None:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    model_name = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    language = payload.get("language", "ta")
+    applicant = payload["applicant"]
+    prediction = payload["prediction"]
+    counterfactual = payload.get("counterfactual") or {}
+
+    system_prompt = (
+        "You write customer-facing loan replies for a lending app. "
+        "Use only the supplied applicant, prediction, and counterfactual data. "
+        "Do not invent facts, rates, or policy details. "
+        "Return strict JSON with keys: tamil_text, english_text, tamil_steps, english_steps, title. "
+        "Each steps field must be an array of 1-4 short strings. "
+        "Keep the reply respectful, concise, and practical."
+    )
+    top_reason = (prediction.get("shap_factors") or [{}])[0].get("plain_english", "")
+    user_prompt = json.dumps(
+        {
+            "language": language,
+            "applicant": {
+                "id": applicant.get("id"),
+                "name": applicant.get("name"),
+                "city": applicant.get("city"),
+                "loan_purpose": applicant.get("loan_purpose"),
+                "loan_amount": applicant.get("loan_amount"),
+                "monthly_income": applicant.get("monthly_income"),
+                "monthly_emi_total": applicant.get("monthly_emi_total"),
+                "emi_to_income_ratio": applicant.get("emi_to_income_ratio"),
+                "credit_history_months": applicant.get("credit_history_months"),
+                "num_late_payments": applicant.get("num_late_payments"),
+                "action_steps": applicant.get("action_steps", []),
+            },
+            "prediction": {
+                "decision": prediction.get("decision"),
+                "confidence": prediction.get("confidence"),
+                "reject_probability": prediction.get("reject_probability"),
+                "top_reason": top_reason,
+                "shap_factors": prediction.get("shap_factors", []),
+            },
+            "counterfactual": counterfactual,
+        },
+        ensure_ascii=False,
+    )
+
+    request_data = json.dumps(
+        {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.2,
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        f"{base_url}/chat/completions",
+        data=request_data,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=25) as response:
+            response_payload = json.loads(response.read().decode("utf-8"))
+        content = response_payload["choices"][0]["message"]["content"]
+        parsed = json.loads(_strip_json_code_fences(content))
+        if not isinstance(parsed, dict):
+            return None
+        return {
+            "title": str(parsed.get("title", "Customer Reply")),
+            "tamil_text": str(parsed.get("tamil_text", "")).strip(),
+            "english_text": str(parsed.get("english_text", "")).strip(),
+            "tamil_steps": [str(item) for item in parsed.get("tamil_steps", []) if str(item).strip()],
+            "english_steps": [str(item) for item in parsed.get("english_steps", []) if str(item).strip()],
+            "source": "llm",
+        }
+    except (urllib.error.URLError, urllib.error.HTTPError, KeyError, IndexError, json.JSONDecodeError, TimeoutError):
+        return None
+
+
+def _fallback_customer_reply(applicant: dict[str, Any], prediction: dict[str, Any], counterfactual: dict[str, Any] | None, language: str) -> dict[str, Any]:
+    english_name = applicant.get("name", "there")
+    tamil_name = applicant.get("name_tamil", english_name)
+    approved = prediction.get("decision") == "APPROVE"
+    top_factor = (prediction.get("shap_factors") or [{}])[0]
+    if approved:
+        english_text = (
+            f"Hello {english_name}, your loan is approved. Please keep your income and repayment documents ready for the next step."
+        )
+        tamil_text = (
+            f"வணக்கம் {tamil_name} அவர்களே, உங்கள் கடன் விண்ணப்பம் அங்கீகரிக்கப்பட்டுள்ளது. அடுத்த கட்டத்திற்கு வருமானம் மற்றும் திருப்பிச் செலுத்தும் ஆவணங்களை தயார் வைத்திருக்கவும்."
+        )
+        english_steps = [
+            "Keep income proof and identity documents ready.",
+            "Continue on-time repayments on any existing loans.",
+            "Proceed to verification and final documentation.",
+        ]
+        tamil_steps = [
+            "வருமானச் சான்று மற்றும் அடையாள ஆவணங்களை தயார் வைத்திருக்கவும்.",
+            "உள்ள கடன்களில் நேரத்தில் கட்டணங்களை தொடருங்கள்.",
+            "சரிபார்ப்பு மற்றும் இறுதி ஆவணப்படுத்தல் கட்டத்திற்கு செல்லவும்.",
+        ]
+    else:
+        if counterfactual and counterfactual.get("counterfactual_decision") == "APPROVE":
+            change_text_en = []
+            change_text_ta = []
+            for change in counterfactual.get("changes", []):
+                if change.get("feature") == "emi_amount":
+                    diff = abs(float(change.get("original_value", 0)) - float(change.get("new_value", 0)))
+                    change_text_en.append(f"reduce your EMI by ₹{diff:,.0f}")
+                    change_text_ta.append(f"உங்கள் மாத தவணையை ₹{diff:,.0f} குறைக்கவும்")
+                elif change.get("feature") == "credit_score":
+                    diff = int(abs(float(change.get("change_abs", 0))))
+                    change_text_en.append(f"raise your credit score by {diff} points")
+                    change_text_ta.append(f"உங்கள் கிரெடிட் ஸ்கோரை {diff} புள்ளிகள் உயர்த்தவும்")
+                elif change.get("feature") == "num_defaults":
+                    diff = int(abs(float(change.get("change_abs", 0))))
+                    change_text_en.append(f"clear {diff} default{'s' if diff != 1 else ''}")
+                    change_text_ta.append("ஒரு நிலுவையை அடைக்கவும்" if diff == 1 else f"{diff} நிலுவைகளை அடைக்கவும்")
+            if not change_text_en:
+                change_text_en = ["improve the listed risk factors"]
+                change_text_ta = ["பட்டியலிடப்பட்ட அபாயக் காரணிகளை மேம்படுத்தவும்"]
+            english_text = (
+                f"Hello {english_name}, your loan is not approved yet. If you {', '.join(change_text_en[:-1]) + ', and ' + change_text_en[-1] if len(change_text_en) > 1 else change_text_en[0]}, this application could move to approval."
+            )
+            tamil_text = (
+                f"வணக்கம் {tamil_name} அவர்களே, உங்கள் கடன் விண்ணப்பம் இப்போது அங்கீகரிக்கப்படவில்லை. நீங்கள் {', '.join(change_text_ta[:-1]) + ', மற்றும் ' + change_text_ta[-1] if len(change_text_ta) > 1 else change_text_ta[0]} என்றால், இந்த விண்ணப்பம் அங்கீகார நிலைக்கு செல்லலாம்."
+            )
+            english_steps = [item for item in change_text_en[:3]]
+            tamil_steps = [item for item in change_text_ta[:3]]
+        else:
+            english_text = (
+                f"Hello {english_name}, your loan is not approved yet. The main factor is {top_factor.get('plain_english', 'risk factors need improvement')}."
+            )
+            tamil_text = (
+                f"வணக்கம் {tamil_name} அவர்களே, உங்கள் கடன் விண்ணப்பம் இப்போது அங்கீகரிக்கப்படவில்லை. முக்கிய காரணம்: {top_factor.get('plain_english', 'அபாயக் காரணிகள் மேம்பாடு தேவைப்படுகிறது')}."
+            )
+            english_steps = [
+                "Reduce monthly EMI burden.",
+                "Keep every repayment on time for the next 3 months.",
+                "Reapply after your repayment profile improves.",
+            ]
+            tamil_steps = [
+                "மாத EMI சுமையை குறைக்கவும்.",
+                "அடுத்த 3 மாதங்களுக்கு ஒவ்வொரு கட்டணமும் நேரத்தில் செலுத்தவும்.",
+                "திருப்பிச் செலுத்தும் நிலை மேம்பட்ட பிறகு மீண்டும் விண்ணப்பிக்கவும்.",
+            ]
+
+    english_steps = _normalize_steps(english_steps, [
+        "Keep income proof and identity documents ready.",
+        "Continue on-time repayments on any existing loans.",
+        "Proceed to verification and final documentation.",
+    ])
+    tamil_steps = _normalize_steps(tamil_steps, [
+        "வருமானச் சான்று மற்றும் அடையாள ஆவணங்களை தயார் வைத்திருக்கவும்.",
+        "உள்ள கடன்களில் நேரத்தில் கட்டணங்களை தொடருங்கள்.",
+        "சரிபார்ப்பு மற்றும் இறுதி ஆவணப்படுத்தல் கட்டத்திற்கு செல்லவும்.",
+    ])
+
+    return {
+        "title": "Customer Reply",
+        "tamil_text": tamil_text,
+        "english_text": english_text,
+        "tamil_steps": tamil_steps,
+        "english_steps": english_steps,
+        "source": "fallback",
+    }
+
+
+def generate_customer_reply(applicant_id: int, language: str = "ta") -> dict[str, Any]:
+    applicant = get_applicant(applicant_id)
+    prediction = predict(applicant)
+    counterfactual = None
+    if prediction.get("decision") == "REJECT":
+        try:
+            counterfactual = generate_counterfactual(applicant_id)
+        except Exception:
+            counterfactual = None
+
+    context = {
+        "applicant": applicant,
+        "prediction": prediction,
+        "counterfactual": counterfactual,
+        "language": language,
+    }
+    llm_reply = _call_llm_customer_reply(context)
+    reply = llm_reply or _fallback_customer_reply(applicant, prediction, counterfactual, language)
+    reply.update(
+        {
+            "applicant_id": applicant_id,
+            "language": language,
+            "decision": prediction.get("decision"),
+            "confidence": prediction.get("confidence"),
+            "reject_probability": prediction.get("reject_probability"),
+            "counterfactual": counterfactual,
+        }
+    )
+    return reply
+
+
+def generate_counterfactual(applicant_id: int) -> dict[str, Any]:
+    """
+    Generate counterfactual explanation: what minimum changes would flip REJECT to APPROVE?
+    Only modifies actionable features: emi_amount, credit_score, num_defaults
+    """
+    applicant = get_applicant(applicant_id)
+    original_prediction = predict(applicant)
+    original_decision = original_prediction["decision"]
+    original_confidence = float(original_prediction["confidence"])
+    _current_feature_vector = encode_applicant(applicant)
+    
+    if original_decision == "APPROVE":
+        return {
+            "applicant_id": applicant_id,
+            "original_decision": "APPROVE",
+            "counterfactual_decision": "APPROVE",
+            "original_confidence": original_confidence,
+            "new_confidence": original_confidence,
+            "changes": [],
+            "plain_english": "Your application is already approved. No changes needed.",
+            "tamil_text": "உங்கள் விண்ணப்பம் ஏற்கனவே ஒப்புதல் பெற்றுள்ளது. மாற்றம் தேவையில்லை.",
+        }
+
+    original_emi = float(applicant.get("monthly_emi_total", 0))
+    original_score = float(applicant.get("credit_score", 700))
+    original_defaults = float(applicant.get("num_late_payments", 0))
+
+    emi_candidates = [original_emi * (1 - pct / 100) for pct in range(5, 45, 5)]
+    score_candidates = [original_score + inc for inc in range(10, 110, 10)]
+    default_candidates = [max(0.0, original_defaults - dec) for dec in range(1, min(3, int(original_defaults)) + 1)]
+
+    candidate_spaces: dict[str, list[float]] = {
+        "emi_amount": emi_candidates,
+        "credit_score": score_candidates,
+        "num_defaults": default_candidates,
+    }
+
+    best_applicant: dict[str, Any] | None = None
+    best_values: dict[str, float] | None = None
+    best_key: tuple[int, float, float] | None = None
+
+    for change_count in range(1, 4):
+        found_for_count = False
+        for fields in combinations(candidate_spaces.keys(), change_count):
+            field_spaces = [candidate_spaces[field] for field in fields]
+            if any(not space for space in field_spaces):
+                continue
+
+            for candidate_values in product(*field_spaces):
+                test_applicant = dict(applicant)
+                new_emi = original_emi
+                new_score = original_score
+                new_defaults = original_defaults
+
+                for field, value in zip(fields, candidate_values):
+                    if field == "emi_amount":
+                        new_emi = float(value)
+                        test_applicant["monthly_emi_total"] = new_emi
+                    elif field == "credit_score":
+                        new_score = float(value)
+                        test_applicant["credit_score"] = new_score
+                    elif field == "num_defaults":
+                        new_defaults = float(value)
+                        test_applicant["num_late_payments"] = new_defaults
+
+                if new_emi != original_emi:
+                    test_applicant["emi_to_income_ratio"] = min(0.98, new_emi / float(applicant.get("monthly_income", 1)))
+
+                test_pred = predict(test_applicant)
+                test_reject_prob = float(test_pred["reject_probability"])
+                if test_reject_prob >= REJECTION_THRESHOLD:
+                    continue
+
+                magnitude = (
+                    abs(new_emi - original_emi) / max(original_emi, 1.0)
+                    + abs(new_score - original_score) / 100.0
+                    + abs(new_defaults - original_defaults)
+                )
+                candidate_key = (change_count, round(magnitude, 6), round(test_reject_prob, 6))
+                if best_key is None or candidate_key < best_key:
+                    best_key = candidate_key
+                    best_applicant = test_applicant
+                    best_values = {
+                        "monthly_emi_total": new_emi,
+                        "credit_score": new_score,
+                        "num_late_payments": new_defaults,
+                    }
+                    found_for_count = True
+
+        if found_for_count:
+            break
+
+    if best_applicant is None:
+        return {
+            "applicant_id": applicant_id,
+            "original_decision": original_decision,
+            "counterfactual_decision": None,
+            "original_confidence": original_confidence,
+            "new_confidence": None,
+            "changes": [],
+            "plain_english": "No feasible counterfactual found. This application requires structural changes (income increase, loan reduction) that are outside normal timeframes.",
+            "tamil_text": "சாத்தியமான மாறுதல் எதுவும் கண்டறிய முடியவில்லை. இந்த விண்ணப்பம் நிர்ணயிக்கப்பட்ட செயல்கள் (வருமான அதிகரிப்பு, கடன் குறைப்பு) தேவைப்படுகிறது.",
+        }
+
+    new_prediction = predict(best_applicant)
+    new_confidence = float(new_prediction["confidence"])
+
+    changes = []
+    if best_values is None:
+        best_values = {
+            "monthly_emi_total": original_emi,
+            "credit_score": original_score,
+            "num_late_payments": original_defaults,
+        }
+
+    if best_values["monthly_emi_total"] != original_emi:
+        new_emi_val = float(best_values["monthly_emi_total"])
+        change_pct = round(((new_emi_val - original_emi) / original_emi) * 100, 1)
+        changes.append({
+            "feature": "emi_amount",
+            "display_name": "Monthly EMI",
+            "original_value": round(original_emi, 2),
+            "new_value": round(new_emi_val, 2),
+            "change_pct": change_pct,
+            "description": f"Reduce monthly EMI from ₹{original_emi:,.0f} to ₹{new_emi_val:,.0f}",
+            "actionable": True,
+        })
+    
+    if best_values["credit_score"] != original_score:
+        new_score_val = float(best_values["credit_score"])
+        change_abs = new_score_val - original_score
+        changes.append({
+            "feature": "credit_score",
+            "display_name": "Credit Score",
+            "original_value": round(original_score, 0),
+            "new_value": round(new_score_val, 0),
+            "change_abs": change_abs,
+            "description": f"Increase credit score from {original_score:.0f} to {new_score_val:.0f}",
+            "actionable": True,
+        })
+    
+    if best_values["num_late_payments"] != original_defaults:
+        new_defaults_val = float(best_values["num_late_payments"])
+        change_abs = new_defaults_val - original_defaults
+        changes.append({
+            "feature": "num_defaults",
+            "display_name": "Past Defaults",
+            "original_value": int(original_defaults),
+            "new_value": int(new_defaults_val),
+            "change_abs": change_abs,
+            "description": f"Reduce defaults from {int(original_defaults)} to {int(new_defaults_val)}",
+            "actionable": True,
+        })
+
+    change_descriptions = []
+    tamil_descriptions = []
+    for change in changes:
+        if change["feature"] == "emi_amount":
+            change_descriptions.append(f"reducing your EMI by ₹{abs(change['original_value'] - change['new_value']):,.0f}")
+            tamil_descriptions.append(f"உங்கள் மாத தவணையை ₹{abs(change['original_value'] - change['new_value']):,.0f} குறைத்து")
+        elif change["feature"] == "credit_score":
+            change_descriptions.append(f"improving your credit score by {int(change['change_abs'])} points")
+            tamil_descriptions.append(f"உங்கள் கிரெடிட் ஸ்கோரை {int(change['change_abs'])} புள்ளிகள் உயர்த்தி")
+        elif change["feature"] == "num_defaults":
+            count = int(abs(change["change_abs"]))
+            change_descriptions.append(f"clearing {count} default{'s' if count != 1 else ''}")
+            tamil_descriptions.append("ஒரு நிலுவையை அடைத்து" if count == 1 else f"{count} நிலுவைகளை அடைத்து")
+
+    if len(change_descriptions) == 1:
+        plain_text = f"{change_descriptions[0].capitalize()} would make this application eligible for approval."
+    else:
+        plain_text = f"{', '.join(change_descriptions[:-1])}, and {change_descriptions[-1]} would make this application eligible for approval."
+
+    tamil_text = f"{', '.join(tamil_descriptions)} இந்த விண்ணப்பம் அங்கீகரிக்கப்படும்."
+    
+    return {
+        "applicant_id": applicant_id,
+        "original_decision": original_decision,
+        "counterfactual_decision": "APPROVE",
+        "original_confidence": round(original_confidence, 4),
+        "new_confidence": round(new_confidence, 4),
+        "changes": changes,
+        "plain_english": plain_text,
+        "tamil_text": tamil_text,
+    }
 
 
 def model_info() -> dict[str, Any]:

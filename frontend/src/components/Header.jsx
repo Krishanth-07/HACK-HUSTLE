@@ -5,6 +5,11 @@ const API = "/api";
 
 const talkingPoints = {
   "/": [
+    "Landing page shows the product story and judge positioning",
+    "View Live Demo takes you into the working loan cockpit",
+    "Explore Model Card surfaces the transparency artifact first",
+  ],
+  "/dashboard": [
     "Model verdict comes from live XGBoost - not hardcoded",
     "SHAP values are computed by TreeExplainer on the actual model",
     "Click Full Analysis to see feature attribution breakdown",
@@ -115,11 +120,11 @@ export default function Header() {
     <header className="min-h-16 border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6">
       <div className="grid min-h-16 grid-cols-1 items-center gap-3 py-3 lg:grid-cols-[220px_1fr_280px] lg:py-0">
         <div className="min-w-0">
-          <div className="text-lg font-black text-slate-950">Optimus</div>
+          <NavLink to="/" className="text-lg font-black text-slate-950 hover:text-blue-700">Optimus</NavLink>
           <div className="text-xs font-semibold text-slate-500">Credit Decision System</div>
         </div>
         <nav className="flex gap-1 overflow-x-auto lg:justify-center">
-          <NavLink to="/" className={linkClass}>Applications</NavLink>
+          <NavLink to="/dashboard" className={linkClass}>Dashboard</NavLink>
           <NavLink to="/sandbox" className={linkClass}>Try Live Prediction</NavLink>
           <NavLink to="/explanation" className={linkClass}>SHAP Explanation</NavLink>
           <NavLink to="/fairness" className={linkClass}>Fairness Monitor</NavLink>
