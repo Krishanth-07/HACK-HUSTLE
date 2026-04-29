@@ -77,3 +77,7 @@ INFO:     127.0.0.1:57084 - "GET /api/model/info HTTP/1.1" 200 OK
 INFO:     127.0.0.1:51230 - "GET /api/model/info HTTP/1.1" 200 OK
 INFO:     127.0.0.1:51152 - "GET /api/fairness/1 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:61042 - "GET /api/fairness/1/population HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62355 - "GET /api/model/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60588 - "GET /api/model/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62354 - "GET /api/applicants HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58722 - "GET /api/applicants HTTP/1.1" 200 OK
